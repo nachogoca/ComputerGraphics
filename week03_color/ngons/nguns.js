@@ -4,7 +4,7 @@ var gl;
 var points;
 var colors;
 
-var ngonNumber = 5000; //Change here
+var ngonNumber = 12; //Change here
 
 window.onload = function init()
 { 

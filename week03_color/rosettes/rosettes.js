@@ -4,7 +4,7 @@ var gl;
 var points;
 var colors;
 
-var ngonNumber = 5; //Change here
+var ngonNumber = 50; //Change here
 
 window.onload = function init()
 { 
@@ -16,7 +16,10 @@ window.onload = function init()
     
     // Compute the vertices of the n-gons
     var externalVertices;
-    [ points, colors] = getVertices(ngonNumber);
+    externalVertices = getVertices(ngonNumber);
+    
+    [ points, colors] = addIntermediateVertices(externalVertices);
+    
     
     // Generate new array with the intermediate vertices, so rosettes are drawed
     
@@ -62,11 +65,33 @@ function render() {
     gl.drawArrays( gl.LINES, 0, points.length );
 }
 
+function addIntermediateVertices(externalVertices) {
+    var vertices = [];
+    var colors = [];
+    
+    // The way of renderization is gl.LINES, so all the pairs should be added
+    for(var i = 0; i < externalVertices.length; i++) {
+        
+        // Iterate from i + 1 to the length of externalVertices to add the intermediate points
+        for(var j = i + 1; j < externalVertices.length; j++) {
+            
+            colors.push( vec4(1.0 / ngonNumber , 1.0 / ngonNumber, 1.0 / ngonNumber,1.0) );
+            colors.push( vec4(1.0,1.0,1.0,1.0) );
+            
+            vertices.push(externalVertices[ i ]); // Same external vertex for all the connections of the round
+            vertices.push(externalVertices[ j ]); // The lines are from the previous vertex to each other vertex
+        }
+        
+    }
+    
+    return [ vertices, colors];
+    
+}
+
 // This functions receives number of vertives and returns points in which they are located and the vertex color
 function getVertices(ngonNumber) {
     vertices = [];
-    colors = [];
-    
+   
     var currentPoint = vec2(0.0, .8)
     var angleOfRotation = (2 * Math.PI) / ngonNumber ; // Every time, the new point will be rotated this angle
     
@@ -79,8 +104,6 @@ function getVertices(ngonNumber) {
         vertices.push(currentPoint);
         
         var newPoint = [];
-        var newColor = vec4(HSVtoRGB(angleOfRotation * vertexIndex / (2 * Math.PI), 1, 1 ), 1);
-        
         // Matrix transformation
         // X coordinate
         newPoint[0] = currentPoint[0] * cosineValue + currentPoint[1] * sineValue;
@@ -88,14 +111,11 @@ function getVertices(ngonNumber) {
         // Y coordinate
         newPoint[1] = currentPoint[0] * (-sineValue) + currentPoint[1] * cosineValue;
         
-        // Save generated point and update currentPoint
-        
-        colors.push(newColor);
-        
+        // Save generated point and update currentPoint        
         currentPoint = newPoint;
     }
     
-    return [vertices, colors];
+    return vertices;
 }
 
 /*

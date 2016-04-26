@@ -4,8 +4,8 @@ var points;
 
 var NumPoints = 3000;
 
-var width = 100;
-var height = 100;
+var width = 250;
+var height = 250;
 
 // Maze with height > width is not supported
 

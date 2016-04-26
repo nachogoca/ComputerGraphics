@@ -4,7 +4,7 @@ var points;
 var Nrand, GaussAdd, GaussFac;
 
 var NumPoints = 300;
-var recursionLimit = 4;
+var recursionLimit = 2;
 
 window.onload = function init() {
     var canvas = document.getElementById("gl-canvas");
