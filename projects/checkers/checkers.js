@@ -69,43 +69,32 @@ function render() {
 function drawCheckersBoard(){
     var canvasVertexLimits = getBoardLinearLimits();
     var vertices = [];
-   
-    // Add beige to colors
-
-            
-
-            //vertices.push (vec2( canvasVertexLimits[0 + 1] - .01 , canvasVertexLimits[1] + .01 ) );
-            
-    
-    var color = true    ;
+  
+    var color = true;
     
     //Create points and arrange them
     for (var row = 0; row < 8; row++ ){
         
         for (var col = 0; col < 8; col++) {
            
-                vertices.push (vec2( canvasVertexLimits[row] , canvasVertexLimits[col]));
-                vertices.push (vec2( canvasVertexLimits[row], canvasVertexLimits[col + 1] ));
-                vertices.push (vec2( canvasVertexLimits[row + 1], canvasVertexLimits[col] ) );
-                
-                vertices.push (vec2( canvasVertexLimits[row + 1], canvasVertexLimits[col] ) );
-                vertices.push (vec2( canvasVertexLimits[row], canvasVertexLimits[col + 1]) );
-                vertices.push (vec2( canvasVertexLimits[row + 1] , canvasVertexLimits[col + 1] ));
+            // The square is made of two triangles
+            vertices.push (vec2( canvasVertexLimits[row] , canvasVertexLimits[col]));
+            vertices.push (vec2( canvasVertexLimits[row], canvasVertexLimits[col + 1] ));
+            vertices.push (vec2( canvasVertexLimits[row + 1], canvasVertexLimits[col] ) );
             
-            if(color) {
-                
-                
+            vertices.push (vec2( canvasVertexLimits[row + 1], canvasVertexLimits[col] ) );
+            vertices.push (vec2( canvasVertexLimits[row], canvasVertexLimits[col + 1]) );
+            vertices.push (vec2( canvasVertexLimits[row + 1] , canvasVertexLimits[col + 1] ));
+            
+            // To make the diagonal color pattern
+            if(color)
                 addRed();
-            } else {
-                addBrown();
-            }
+            else
+                addBeige();
             
             color = !color;
-            
-            
-
         }
-        
+        // Diagonal pattern
         color = !color;
     }
     
@@ -126,12 +115,8 @@ function addRed() {
 }
 
 // Draw a beige square
-function addBrown() {
+function addBeige() {
  // Add beige to colors
- 
-  // Add beige to colors
-    //colors.push( vec4( .96 , .94 , .87 , 1 ) );
-    //colors.push( vec4( .96 , .94 , .87 , 1 ) );
     
     colors.push( vec4( .74 , .26 , .16 , 1 ) );
     colors.push( vec4( .74 , .26 , .16 , 1 ) );
@@ -139,7 +124,6 @@ function addBrown() {
     colors.push( vec4( .64 , .16 , .16 , 1 ) );
     colors.push( vec4( .64 , .16 , .16 , 1 ) );
     colors.push( vec4( .64 , .16 , .16 , 1 ) );
-
     
 }
 
