@@ -6,6 +6,7 @@ var colors;
 var NumPoints = 3000;
 var WEBGL_CANVAS_DIMENSION = 2;
 var CHECKERS_PIECE_RATIO = 0.75;
+var TRIANGLES_PER_CIRCLE = 34;
 
 
 // Maze with height > width is not supported
@@ -26,13 +27,21 @@ window.onload = function init() {
     if ( !gl ) { alert( "WebGL isn't available" ); }
     
     colors = [];
-    points = drawCheckersBoard();
+    
     
     checkersTable = createArray(8,8);
-    checkersTable[0][0] = 1;
     
+    for(var i = 0; i < 8; i++){
+        for(var j = 0; j < 8; j++){
+            checkersTable[i][j] = 1;
+        }
+    }
+    
+    
+    points = drawCheckersBoard();
     playerPoints = drawPlayers();
     
+    points = points.concat(playerPoints);
     
     //
     //  Configure WebGL
@@ -113,8 +122,10 @@ function drawCheckersBoard(){
     return vertices;
 }
 
-// Draw circles representing the players, according to checkersTable
+// Returns points that represents the circles-playeers, according to checkersTable
 function drawPlayers() {
+    
+    var playersPoints = [];
     
     var boardLimits = getBoardLinearLimits();
     
@@ -128,13 +139,17 @@ function drawPlayers() {
                       
             // Get the points that create the circle 
             var circlePoints = getCirclePoints( row, col, boardLimits);
+            playersPoints = playersPoints.concat(circlePoints);
             
-            
-            
+            //debug
+            for(var i = 0; i < 102; i++){
+                colors.push(vec4(1.0,1.0,1.0,1.0));
+            }
             
         }
     }
     
+    return playersPoints;
 }
 
 // Returns a set of triangles that together are the circle.
@@ -152,7 +167,7 @@ function getCirclePoints(rowIndex, colIndex, boardLimits) {
     centerPoint.X -= 1;
     centerPoint.Y = (2 - centerPoint.Y) - 1;
  
-    var radius = (boardLimits[1] - boardLimits[0]) * CHECKERS_PIECE_RATIO;
+    var radius = (distanceBetweenLimits / 2) * CHECKERS_PIECE_RATIO;
     
     return generateTrianglesOfCircle(centerPoint, radius);    
 }
@@ -160,11 +175,27 @@ function getCirclePoints(rowIndex, colIndex, boardLimits) {
 
 
 function generateTrianglesOfCircle(centerPoint, radius){
-    var points = [];
+    var circlePoints = [];
     
+    // Is easier with vec2 to do math
+    var center = vec2(centerPoint.X, centerPoint.Y);
     
+    var deltaAngle = (2 * Math.PI) / TRIANGLES_PER_CIRCLE;
+    
+    for (var i = 0; i < TRIANGLES_PER_CIRCLE; i++) {
         
+        // Add each triangle -> 3 points
+        circlePoints.push( center );
+        circlePoints.push( vec2(   radius * Math.cos( i * deltaAngle ) + centerPoint.X,
+                                   radius * Math.sin( i * deltaAngle ) + centerPoint.Y ));
+        circlePoints.push( vec2(   radius * Math.cos( ( i + 1 ) * deltaAngle ) + centerPoint.X,
+                                   radius * Math.sin( ( i + 1 ) * deltaAngle ) + centerPoint.Y ));
+                                  
+                                    
+        
+    }
     
+    return circlePoints;
 }
 
 
