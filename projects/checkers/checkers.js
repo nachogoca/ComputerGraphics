@@ -30,15 +30,7 @@ window.onload = function init() {
     
     checkersTable = createArray(8,8);
     
-    for(var i = 0; i < 8; i++){
-        for(var j = 0; j < 8; j++){
-            checkersTable[i][j] = 1;
-        }
-    }
-    
-    checkersTable[0][1] = 2;
-    checkersTable[0][0] = 0;
-    
+    initializeGame();
     
     points = drawCheckersBoard();
     playerPoints = drawPlayers();
@@ -86,6 +78,36 @@ window.onload = function init() {
 function render() {
     gl.clear( gl.COLOR_BUFFER_BIT );
     gl.drawArrays( gl.TRIANGLES, 0, points.length );
+}
+
+// Initialize checkers board matrix
+function initializeGame(){
+    for (var i = 0; i < 8; i += 2){
+        checkersTable[0][i] = 1;    // Player 1
+        checkersTable[1][i] = 0;
+        checkersTable[2][i] = 1; 
+        
+        checkersTable[3][i] = 0;    // Empty
+        checkersTable[4][i] = 0;
+        
+        checkersTable[5][i] = 0;
+        checkersTable[6][i] = 2;    // Player 2
+        checkersTable[7][i] = 0;
+    }
+    
+    for (var i = 1; i < 8; i += 2){
+        checkersTable[0][i] = 0;    // Player 1
+        checkersTable[1][i] = 1;
+        checkersTable[2][i] = 0; 
+        
+        checkersTable[3][i] = 0;    // Empty
+        checkersTable[4][i] = 0;
+        
+        checkersTable[5][i] = 2;
+        checkersTable[6][i] = 0;    // Player 2
+        checkersTable[7][i] = 2;
+    }
+    
 }
 
 // Returns vertices of checker board arranged so can webgl can draw them as triangles
@@ -158,7 +180,7 @@ function drawPlayers() {
 function getRightColor(row, col){
     
     switch (checkersTable[ row ][ col ]){
-        case 1: return vec4 ( 1.0, 0.84, 0.0, 1.0);
+        case 1: return vec4 ( 0.92, 0.75, 0.0, 1.0);
         case 2: return vec4 ( 0.82, 0.41, 0.11, 1.0 );
         //TODO Add other colors
         default:    return vec4 (1.0, 1.0, 1.0, 1.0);
