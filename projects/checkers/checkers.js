@@ -4,8 +4,7 @@ var points;
 var colors;
 
 var NumPoints = 3000;
-var WEBGL_CANVAS_DIMENSION = 2;
-var CHECKERS_PIECE_RATIO = 0.75;
+var CHECKERS_PIECE_RATIO = 0.70;
 var TRIANGLES_PER_CIRCLE = 34;
 
 
@@ -36,6 +35,9 @@ window.onload = function init() {
             checkersTable[i][j] = 1;
         }
     }
+    
+    checkersTable[0][1] = 2;
+    checkersTable[0][0] = 0;
     
     
     points = drawCheckersBoard();
@@ -134,16 +136,16 @@ function drawPlayers() {
         for (var col = 0; col < 8; col++) {
             
             // Nothing to draw here. No players
-            if(!checkersTable[ row ][ col ])
-                break;
+            if( checkersTable[ row ][ col ] == 0) 
+                continue;
                       
             // Get the points that create the circle 
             var circlePoints = getCirclePoints( row, col, boardLimits);
             playersPoints = playersPoints.concat(circlePoints);
             
-            //debug
-            for(var i = 0; i < 102; i++){
-                colors.push(vec4(1.0,1.0,1.0,1.0));
+            var perfectColor = getRightColor(row, col);
+            for(var i = 0; i < circlePoints.length ; i++){
+                colors.push(perfectColor);
             }
             
         }
@@ -151,6 +153,19 @@ function drawPlayers() {
     
     return playersPoints;
 }
+
+// Returns the adequate color for the checkers piece, according to checkersTable, row and col
+function getRightColor(row, col){
+    
+    switch (checkersTable[ row ][ col ]){
+        case 1: return vec4 ( 1.0, 0.84, 0.0, 1.0);
+        case 2: return vec4 ( 0.82, 0.41, 0.11, 1.0 );
+        //TODO Add other colors
+        default:    return vec4 (1.0, 1.0, 1.0, 1.0);
+    }
+    
+}
+
 
 // Returns a set of triangles that together are the circle.
 // The circle coordinates depends of the board limits and the row and index of the board.
@@ -229,7 +244,7 @@ function addBeige() {
 function getBoardLinearLimits(){
     var limits = [];
     
-    var delta =  WEBGL_CANVAS_DIMENSION / 8.0;
+    var delta =  2 / 8.0;
     currentLimit = -1;
     
     for(var i = 0; i < 9; i++){
