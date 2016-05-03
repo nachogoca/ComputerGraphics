@@ -4,12 +4,19 @@ var points;
 var colors;
 
 var NumPoints = 3000;
+var WEBGL_CANVAS_DIMENSION = 2;
+var CHECKERS_PIECE_RATIO = 0.75;
 
 
 // Maze with height > width is not supported
 
-// Maze representation in boolean matrix
-var maze_matrix;
+// Maze representation
+// 0 -> empty
+// 1 -> player a
+// 2 -> player b 
+// 3 -> player a selected
+// 4 -> player b selected
+var checkersTable;
 
 
 window.onload = function init() {
@@ -20,6 +27,11 @@ window.onload = function init() {
     
     colors = [];
     points = drawCheckersBoard();
+    
+    checkersTable = createArray(8,8);
+    checkersTable[0][0] = 1;
+    
+    playerPoints = drawPlayers();
     
     
     //
@@ -101,11 +113,66 @@ function drawCheckersBoard(){
     return vertices;
 }
 
+// Draw circles representing the players, according to checkersTable
+function drawPlayers() {
+    
+    var boardLimits = getBoardLinearLimits();
+    
+    // Visit every cell
+    for (var row = 0; row < 8; row++) {
+        for (var col = 0; col < 8; col++) {
+            
+            // Nothing to draw here. No players
+            if(!checkersTable[ row ][ col ])
+                break;
+                      
+            // Get the points that create the circle 
+            var circlePoints = getCirclePoints( row, col, boardLimits);
+            
+            
+            
+            
+        }
+    }
+    
+}
+
+// Returns a set of triangles that together are the circle.
+// The circle coordinates depends of the board limits and the row and index of the board.
+function getCirclePoints(rowIndex, colIndex, boardLimits) {
+    var distanceBetweenLimits = boardLimits[1] - boardLimits[0];
+   
+    // Calculate center point, according to indexes
+    var centerPoint = [];
+    centerPoint.X = (colIndex * distanceBetweenLimits) + (distanceBetweenLimits / 2); // Indexes are 0-based
+    centerPoint.Y = (rowIndex * distanceBetweenLimits) + (distanceBetweenLimits / 2);
+    
+    // I don't like webgl coordinate system
+    // Transform [0,2] in X, and [0,2] in Y to webgl coordinate system
+    centerPoint.X -= 1;
+    centerPoint.Y = (2 - centerPoint.Y) - 1;
+ 
+    var radius = (boardLimits[1] - boardLimits[0]) * CHECKERS_PIECE_RATIO;
+    
+    return generateTrianglesOfCircle(centerPoint, radius);    
+}
+
+
+
+function generateTrianglesOfCircle(centerPoint, radius){
+    var points = [];
+    
+    
+        
+    
+}
+
+
 // Draw a beige square
 function addRed() {
  // Add beige to colors
  
-    colors.push( vec4( .96 , .94 , .87 , 1 ) );
+    colors.push( vec4( .96 , .94 , .87 , 1 ) ); // Design
     colors.push( vec4( .96 , .94 , .87 , 1 ) );
     colors.push( vec4( .86 , .84 , .77 , 1 ) );
     colors.push( vec4( .86 , .84 , .77 , 1 ) );
@@ -118,7 +185,7 @@ function addRed() {
 function addBeige() {
  // Add beige to colors
     
-    colors.push( vec4( .74 , .26 , .16 , 1 ) );
+    colors.push( vec4( .74 , .26 , .16 , 1 ) ); // Design
     colors.push( vec4( .74 , .26 , .16 , 1 ) );
     colors.push( vec4( .64 , .16 , .16 , 1 ) ); 
     colors.push( vec4( .64 , .16 , .16 , 1 ) );
@@ -131,7 +198,7 @@ function addBeige() {
 function getBoardLinearLimits(){
     var limits = [];
     
-    var delta =  2 / 8.0;
+    var delta =  WEBGL_CANVAS_DIMENSION / 8.0;
     currentLimit = -1;
     
     for(var i = 0; i < 9; i++){
@@ -142,7 +209,7 @@ function getBoardLinearLimits(){
     return limits;
 }
 
-// Aux function to create array / maze matrix
+// Aux function to create matrix
 function createArray(length) {
     var arr = new Array(length || 0),
         i = length;
