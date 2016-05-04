@@ -1,5 +1,9 @@
 
 var gl;
+var canvas;
+var canvasXOffset;
+var canvasYOffset;
+
 var points;
 var colors;
 
@@ -18,23 +22,31 @@ var TRIANGLES_PER_CIRCLE = 34;
 // 4 -> player b selected
 var checkersTable;
 
+// State
+// State of game
+// 0 -> No piece selected
+// 1 -> Piece selected
+var state;
+
 
 window.onload = function init() {
-    var canvas = document.getElementById("gl-canvas");
+    canvas = document.getElementById("gl-canvas");
     
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
     
+    // Initialize elements
+    canvasXOffset = canvas.offsetLeft;
+    canvasYOffset = canvas.offsetTop;
+    
+    
     colors = [];
-    
-    
     checkersTable = createArray(8,8);
     
     initializeGame();
     
     points = drawCheckersBoard();
-    playerPoints = drawPlayers();
-    
+    playerPoints = drawPlayers(); 
     points = points.concat(playerPoints);
     
     //
@@ -71,6 +83,29 @@ window.onload = function init() {
     gl.enableVertexAttribArray(vColor);
     
     
+    // Set up event listener
+	canvas.addEventListener ("click", function(event) {
+        // Convert to canvas coordinate system
+        var point = vec2 (-1 + 2 * (event.clientX - canvasXOffset)/canvas.width,
+            -1 + 2 * ( canvas.height - (event.clientY - canvasYOffset) ) / canvas.height);
+        
+        // Analyze click positions
+        processClick(point);
+        /*
+        points = [];
+        colors = [];
+        
+        
+        console.log(points.length);
+        console.log(colors.length);
+        points = drawCheckersBoard();
+        playerPoints = drawPlayers(); 
+        points = points.concat(playerPoints);
+        console.log(points.length);
+        console.log(colors.length);
+	*/
+});
+    
     render();
 };
 
@@ -78,6 +113,8 @@ window.onload = function init() {
 function render() {
     gl.clear( gl.COLOR_BUFFER_BIT );
     gl.drawArrays( gl.TRIANGLES, 0, points.length );
+     
+    requestAnimFrame (render);
 }
 
 // Initialize checkers board matrix
@@ -288,4 +325,27 @@ function createArray(length) {
     }
 
     return arr;
+}
+
+// TODO
+function processClick(pointClicked) {
+    
+    var [rowOfClick, colOfClick] = getPositionInBoardMatrix(pointClicked);
+
+    checkersTable[ rowOfClick, colOfClick] = 1;
+    
+}
+
+// Determine the row and column of the click event
+function getPositionInBoardMatrix(clickPosition) {
+    var squareLimitLenght = 2.0 / 8;
+    
+    // Working with other coordinate system Domain [0,2] and range [0,2]
+    var niceCoordinateSystemXPosition = clickPosition[0] + 1;
+    var niceCoordinateSystemYPosition = (1 - clickPosition[1]); 
+    
+    var row = Math.floor( niceCoordinateSystemYPosition / squareLimitLenght );
+    var col = Math.floor( niceCoordinateSystemXPosition / squareLimitLenght );
+    
+    return [row, col];
 }
