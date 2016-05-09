@@ -23,16 +23,13 @@ var TRIANGLES_PER_CIRCLE = 34;
 // Maze representation
 // 0 -> empty
 // 1 -> player a
-// 2 -> player b 
-// 3 -> player a selected
+// 2 -> player a selected 
+// 3 -> player b
 // 4 -> player b selected
 var checkersTable;
 
-// State
-// State of game
-// 0 -> No piece selected
-// 1 -> Piece selected
-var state;
+var pieceIsSelected = false;
+var lastPieceSelected;
 
 
 window.onload = function init() {
@@ -116,7 +113,7 @@ window.onload = function init() {
         
         
         gl.bindBuffer( gl.ARRAY_BUFFER, vertexBuffer );
-        gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
+        gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.DYNAMIC_DRAW );
         
         gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
         gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.DYNAMIC_DRAW );
@@ -141,11 +138,50 @@ function processClick(pointClicked) {
     
     var [rowOfClick, colOfClick] = getPositionInBoardMatrix(pointClicked);
     
-    //console.log('[' + rowOfClick+ ', ' + colOfClick + ']');
     
-    checkersTable[ rowOfClick] [colOfClick] = 0;
+    if( !positionCanBeSelected(rowOfClick, colOfClick))
+        return;
+    
+    var squareState = checkersTable[ rowOfClick ] [ colOfClick ];
+    
+    if(pieceIsSelected){
+        
+        checkersTable[ rowOfClick ][ colOfClick ] = checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] - 1;
+        checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] = 0; // Remove piece from board
+        pieceIsSelected = false;
+    } else {
+        // Select piece
+        if(squareState == 1 || squareState == 3){
+            checkersTable[ rowOfClick ] [ colOfClick ]++;
+            lastPieceSelected = [ rowOfClick, colOfClick ];
+            
+        }
+        pieceIsSelected = true;
+    }
+    
+    
+        
     
 }
+
+// TODO IMPLEMENT
+function positionCanBeSelected(rowInBoard, colInBoard) {
+    var pieceState = checkersTable[ rowInBoard ][ colInBoard ];
+    
+    if ( pieceIsSelected ){
+        
+        if (pieceState == 0)
+            return true;
+        else
+            return false;
+    }
+    
+    if (pieceState == 0)
+        return false;
+        
+    return true;
+}
+
 
 // Initialize checkers board matrix
 function initializeGame(){
@@ -158,7 +194,7 @@ function initializeGame(){
         checkersTable[4][i] = 0;
         
         checkersTable[5][i] = 0;
-        checkersTable[6][i] = 2;    // Player 2
+        checkersTable[6][i] = 3;    // Player 2
         checkersTable[7][i] = 0;
     }
     
@@ -170,9 +206,9 @@ function initializeGame(){
         checkersTable[3][i] = 0;    // Empty
         checkersTable[4][i] = 0;
         
-        checkersTable[5][i] = 2;
+        checkersTable[5][i] = 3;
         checkersTable[6][i] = 0;    // Player 2
-        checkersTable[7][i] = 2;
+        checkersTable[7][i] = 3;
     }
     
 }
@@ -250,8 +286,9 @@ function getRightColor(row, col){
     
     switch (checkersTable[ row ][ col ]){
         case 1:     return vec4 ( 0.92, 0.75, 0.0, 1.0);
-        case 2:     return vec4 ( 0.82, 0.41, 0.11, 1.0 );
-        //TODO Add other colors
+        case 2:     return vec4 (1, 0.75, 0.0, 0.8);
+        case 3:     return vec4 ( 0.82, 0.41, 0.11, 1.0 );
+        case 4:     return vec4 ( 1.0, 0.41, 0.11, 0.8 );
         default:    return vec4 (1.0, 1.0, 1.0, 1.0);
     }
     
