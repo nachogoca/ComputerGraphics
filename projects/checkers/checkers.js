@@ -4,6 +4,12 @@ var canvas;
 var canvasXOffset;
 var canvasYOffset;
 
+var vertexBuffer;
+var colorBuffer;
+
+var checkerBoardPoints;
+var checkerBoardColors;
+
 var points;
 var colors;
 
@@ -39,15 +45,21 @@ window.onload = function init() {
     canvasXOffset = canvas.offsetLeft;
     canvasYOffset = canvas.offsetTop;
     
-    
+    points = [];
     colors = [];
     checkersTable = createArray(8,8);
     
     initializeGame();
     
-    points = drawCheckersBoard();
-    playerPoints = drawPlayers(); 
-    points = points.concat(playerPoints);
+    // Draw checkerBoard
+    [checkerBoardPoints,checkerBoardColors] = drawCheckersBoard();
+    points = points.concat(checkerBoardPoints);
+    colors = colors.concat(checkerBoardColors);
+    
+    // Draw players
+    [playersPoints,playersColors] = drawPlayers(); 
+    points = points.concat(playersPoints);
+    colors = colors.concat(playersColors);
     
     //
     //  Configure WebGL
@@ -62,9 +74,9 @@ window.onload = function init() {
     
     // Load the data into the GPU
     
-    var bufferId = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufferId );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
+    vertexBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, vertexBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.DYNAMIC_DRAW );
 
     // Associate our shader variables with our data buffer
     
@@ -74,9 +86,9 @@ window.onload = function init() {
     
     
     // Colors
-    var colorBuffer = gl.createBuffer();
+    colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.DYNAMIC_DRAW);
     
     var vColor = gl.getAttribLocation(program, "vColor");
     gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0);
@@ -90,31 +102,49 @@ window.onload = function init() {
             -1 + 2 * ( canvas.height - (event.clientY - canvasYOffset) ) / canvas.height);
         
         // Analyze click positions
+        
+        
         processClick(point);
-        /*
+        
         points = [];
         colors = [];
         
         
-        console.log(points.length);
-        console.log(colors.length);
-        points = drawCheckersBoard();
-        playerPoints = drawPlayers(); 
-        points = points.concat(playerPoints);
-        console.log(points.length);
-        console.log(colors.length);
-	*/
-});
+        [playersPoints,playersColors] = drawPlayers(); 
+        points = checkerBoardPoints.concat(playersPoints);
+        colors = checkerBoardColors.concat(playersColors);
+        
+        
+        gl.bindBuffer( gl.ARRAY_BUFFER, vertexBuffer );
+        gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
+        
+        gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
+        gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.DYNAMIC_DRAW );
+        
+    });
     
     render();
 };
 
 
 function render() {
+
     gl.clear( gl.COLOR_BUFFER_BIT );
     gl.drawArrays( gl.TRIANGLES, 0, points.length );
      
     requestAnimFrame (render);
+}
+
+
+// TODO
+function processClick(pointClicked) {
+    
+    var [rowOfClick, colOfClick] = getPositionInBoardMatrix(pointClicked);
+    
+    //console.log('[' + rowOfClick+ ', ' + colOfClick + ']');
+    
+    checkersTable[ rowOfClick] [colOfClick] = 0;
+    
 }
 
 // Initialize checkers board matrix
@@ -151,7 +181,8 @@ function initializeGame(){
 function drawCheckersBoard(){
     var canvasVertexLimits = getBoardLinearLimits();
     var vertices = [];
-  
+    var colorSquares = [];
+    
     var color = true;
     
     //Create points and arrange them
@@ -170,9 +201,9 @@ function drawCheckersBoard(){
             
             // To make the diagonal color pattern
             if(color)
-                addRed();
+                colorSquares = colorSquares.concat(addRed());
             else
-                addBeige();
+                colorSquares = colorSquares.concat(addBeige());
             
             color = !color;
         }
@@ -180,13 +211,14 @@ function drawCheckersBoard(){
         color = !color;
     }
     
-    return vertices;
+    return [vertices, colorSquares];
 }
 
 // Returns points that represents the circles-playeers, according to checkersTable
 function drawPlayers() {
     
     var playersPoints = [];
+    var playersColors = [];
     
     var boardLimits = getBoardLinearLimits();
     
@@ -204,27 +236,90 @@ function drawPlayers() {
             
             var perfectColor = getRightColor(row, col);
             for(var i = 0; i < circlePoints.length ; i++){
-                colors.push(perfectColor);
+                playersColors.push(perfectColor);
             }
             
         }
     }
     
-    return playersPoints;
+    return [playersPoints,playersColors];
 }
 
 // Returns the adequate color for the checkers piece, according to checkersTable, row and col
 function getRightColor(row, col){
     
     switch (checkersTable[ row ][ col ]){
-        case 1: return vec4 ( 0.92, 0.75, 0.0, 1.0);
-        case 2: return vec4 ( 0.82, 0.41, 0.11, 1.0 );
+        case 1:     return vec4 ( 0.92, 0.75, 0.0, 1.0);
+        case 2:     return vec4 ( 0.82, 0.41, 0.11, 1.0 );
         //TODO Add other colors
         default:    return vec4 (1.0, 1.0, 1.0, 1.0);
     }
     
 }
 
+
+
+
+
+// Draw a red square
+function addRed() {
+    var redSquareColor = [];
+    
+    redSquareColor.push( vec4( .96 , .94 , .87 , 1 ) ); // Design
+    redSquareColor.push( vec4( .96 , .94 , .87 , 1 ) );
+    redSquareColor.push( vec4( .86 , .84 , .77 , 1 ) );
+    redSquareColor.push( vec4( .86 , .84 , .77 , 1 ) );
+    redSquareColor.push( vec4( .86 , .84 , .77 , 1 ) );
+    redSquareColor.push( vec4( .86 , .84 , .77 , 1 ) );
+    
+    return redSquareColor;
+}
+
+// Draw a beige square
+function addBeige() {
+    var beigeSquareColor = [];
+    
+    beigeSquareColor.push( vec4( .74 , .26 , .16 , 1 ) ); // Design
+    beigeSquareColor.push( vec4( .74 , .26 , .16 , 1 ) );
+    beigeSquareColor.push( vec4( .64 , .16 , .16 , 1 ) ); 
+    beigeSquareColor.push( vec4( .64 , .16 , .16 , 1 ) );
+    beigeSquareColor.push( vec4( .64 , .16 , .16 , 1 ) );
+    beigeSquareColor.push( vec4( .64 , .16 , .16 , 1 ) );
+    
+    return beigeSquareColor;
+}
+
+
+
+
+// Determine the row and column of the click event
+function getPositionInBoardMatrix(clickPosition) {
+    var squareLimitLenght = 2.0 / 8;
+    
+    // Working with other coordinate system Domain [0,2] and range [0,2]
+    var niceCoordinateSystemXPosition = clickPosition[0] + 1;
+    var niceCoordinateSystemYPosition = (1 - clickPosition[1]); 
+    
+    var row = Math.floor( niceCoordinateSystemYPosition / squareLimitLenght );
+    var col = Math.floor( niceCoordinateSystemXPosition / squareLimitLenght );
+    
+    return [row, col];
+}
+
+// Returns 9 limits from [ -1 , 1 ], because that is the webgl canvas.
+function getBoardLinearLimits(){
+    var limits = [];
+    
+    var delta =  2 / 8.0;
+    currentLimit = -1;
+    
+    for(var i = 0; i < 9; i++){
+        limits.push(currentLimit);
+        currentLimit += delta ;
+    }
+    
+    return limits;
+}
 
 // Returns a set of triangles that together are the circle.
 // The circle coordinates depends of the board limits and the row and index of the board.
@@ -263,56 +358,13 @@ function generateTrianglesOfCircle(centerPoint, radius){
         circlePoints.push( vec2(   radius * Math.cos( i * deltaAngle ) + centerPoint.X,
                                    radius * Math.sin( i * deltaAngle ) + centerPoint.Y ));
         circlePoints.push( vec2(   radius * Math.cos( ( i + 1 ) * deltaAngle ) + centerPoint.X,
-                                   radius * Math.sin( ( i + 1 ) * deltaAngle ) + centerPoint.Y ));
-                                  
-                                    
+                                   radius * Math.sin( ( i + 1 ) * deltaAngle ) + centerPoint.Y ));                            
         
     }
     
     return circlePoints;
 }
 
-
-// Draw a beige square
-function addRed() {
- // Add beige to colors
- 
-    colors.push( vec4( .96 , .94 , .87 , 1 ) ); // Design
-    colors.push( vec4( .96 , .94 , .87 , 1 ) );
-    colors.push( vec4( .86 , .84 , .77 , 1 ) );
-    colors.push( vec4( .86 , .84 , .77 , 1 ) );
-    colors.push( vec4( .86 , .84 , .77 , 1 ) );
-    colors.push( vec4( .86 , .84 , .77 , 1 ) );
-
-}
-
-// Draw a beige square
-function addBeige() {
- // Add beige to colors
-    
-    colors.push( vec4( .74 , .26 , .16 , 1 ) ); // Design
-    colors.push( vec4( .74 , .26 , .16 , 1 ) );
-    colors.push( vec4( .64 , .16 , .16 , 1 ) ); 
-    colors.push( vec4( .64 , .16 , .16 , 1 ) );
-    colors.push( vec4( .64 , .16 , .16 , 1 ) );
-    colors.push( vec4( .64 , .16 , .16 , 1 ) );
-    
-}
-
-// Returns 9 limits from [ -1 , 1 ], because that is the webgl canvas.
-function getBoardLinearLimits(){
-    var limits = [];
-    
-    var delta =  2 / 8.0;
-    currentLimit = -1;
-    
-    for(var i = 0; i < 9; i++){
-        limits.push(currentLimit);
-        currentLimit += delta ;
-    }
-    
-    return limits;
-}
 
 // Aux function to create matrix
 function createArray(length) {
@@ -325,27 +377,4 @@ function createArray(length) {
     }
 
     return arr;
-}
-
-// TODO
-function processClick(pointClicked) {
-    
-    var [rowOfClick, colOfClick] = getPositionInBoardMatrix(pointClicked);
-
-    checkersTable[ rowOfClick, colOfClick] = 1;
-    
-}
-
-// Determine the row and column of the click event
-function getPositionInBoardMatrix(clickPosition) {
-    var squareLimitLenght = 2.0 / 8;
-    
-    // Working with other coordinate system Domain [0,2] and range [0,2]
-    var niceCoordinateSystemXPosition = clickPosition[0] + 1;
-    var niceCoordinateSystemYPosition = (1 - clickPosition[1]); 
-    
-    var row = Math.floor( niceCoordinateSystemYPosition / squareLimitLenght );
-    var col = Math.floor( niceCoordinateSystemXPosition / squareLimitLenght );
-    
-    return [row, col];
 }
