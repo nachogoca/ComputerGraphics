@@ -133,12 +133,13 @@ function render() {
 }
 
 
-// TODO
+// Function that interprets what the user has done, and convert it in a checkers action
 function processClick(pointClicked) {
     
+    // Convert floating point coordinates of click to the checkers table coordinates
     var [rowOfClick, colOfClick] = getPositionInBoardMatrix(pointClicked);
     
-    
+    // Checks basic rules of checkes, there is no game logic here
     if( !positionCanBeSelected(rowOfClick, colOfClick))
         return;
     
@@ -146,9 +147,19 @@ function processClick(pointClicked) {
     
     if(pieceIsSelected){
         
-        checkersTable[ rowOfClick ][ colOfClick ] = checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] - 1;
-        checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] = 0; // Remove piece from board
+        // If it is the same piece, return to no-selected state
+        if(lastPieceSelected[0] == rowOfClick && lastPieceSelected[1] == colOfClick){
+            checkersTable[ rowOfClick ][ colOfClick ] = squareState - 1;
+        } else {
+            // TODO Implement checkers logic
+            // For now it moves
+            
+            checkersTable[ rowOfClick ][ colOfClick ] = checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] - 1;
+            checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] = 0; // Remove piece from board
+        
+        }
         pieceIsSelected = false;
+        
     } else {
         // Select piece
         if(squareState == 1 || squareState == 3){
@@ -164,22 +175,18 @@ function processClick(pointClicked) {
     
 }
 
-// TODO IMPLEMENT
+// Basic rules of checkers game, so next steps are easier to implement
 function positionCanBeSelected(rowInBoard, colInBoard) {
+    // Obtain destination state.
     var pieceState = checkersTable[ rowInBoard ][ colInBoard ];
     
-    if ( pieceIsSelected ){
-        
-        if (pieceState == 0)
-            return true;
-        else
-            return false;
+    // If a piece has been selected, the only destination possible is a empty square or itself.
+    if ( pieceIsSelected ){    
+        return (pieceState == 0 || (lastPieceSelected[0] == rowInBoard && lastPieceSelected[1] == colInBoard));
     }
-    
-    if (pieceState == 0)
-        return false;
-        
-    return true;
+
+    // If a piece hasn't been selected, the empty square is the only square that the user can't select.
+    return (pieceState != 0)
 }
 
 
