@@ -17,10 +17,7 @@ var NumPoints = 3000;
 var CHECKERS_PIECE_RATIO = 0.70;
 var TRIANGLES_PER_CIRCLE = 34;
 
-
-// Maze with height > width is not supported
-
-// Maze representation
+// Board representation
 // 0 -> empty
 // 1 -> player a
 // 2 -> player a selected 
@@ -30,7 +27,6 @@ var checkersTable;
 
 var pieceIsSelected = false;
 var lastPieceSelected;
-
 
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
@@ -92,15 +88,13 @@ window.onload = function init() {
     gl.enableVertexAttribArray(vColor);
     
     
-    // Set up event listener
+    // Set up event listener, click
 	canvas.addEventListener ("click", function(event) {
         // Convert to canvas coordinate system
         var point = vec2 (-1 + 2 * (event.clientX - canvasXOffset)/canvas.width,
             -1 + 2 * ( canvas.height - (event.clientY - canvasYOffset) ) / canvas.height);
         
         // Analyze click positions
-        
-        
         processClick(point);
         
         points = [];
@@ -182,7 +176,15 @@ function positionCanBeSelected(rowInBoard, colInBoard) {
     
     // If a piece has been selected, the only destination possible is a empty square or itself.
     if ( pieceIsSelected ){    
-        return (pieceState == 0 || (lastPieceSelected[0] == rowInBoard && lastPieceSelected[1] == colInBoard));
+        if (lastPieceSelected[0] == rowInBoard && lastPieceSelected[1] == colInBoard)
+            return true;
+        if ( Math.abs ( lastPieceSelected[0] - rowInBoard ) !=  Math.abs( lastPieceSelected[1] - colInBoard ) ) // Only diagonals
+            return false;
+        if ( Math.abs ( lastPieceSelected[0] - rowInBoard ) > 2 )  
+            return false;
+        if ( Math.abs ( lastPieceSelected[1] - colInBoard ) > 2 )     
+            return false;
+        return (pieceState == 0);   
     }
 
     // If a piece hasn't been selected, the empty square is the only square that the user can't select.
@@ -301,10 +303,6 @@ function getRightColor(row, col){
     
 }
 
-
-
-
-
 // Draw a red square
 function addRed() {
     var redSquareColor = [];
@@ -332,9 +330,6 @@ function addBeige() {
     
     return beigeSquareColor;
 }
-
-
-
 
 // Determine the row and column of the click event
 function getPositionInBoardMatrix(clickPosition) {
@@ -386,7 +381,6 @@ function getCirclePoints(rowIndex, colIndex, boardLimits) {
 }
 
 
-
 function generateTrianglesOfCircle(centerPoint, radius){
     var circlePoints = [];
     
@@ -408,7 +402,6 @@ function generateTrianglesOfCircle(centerPoint, radius){
     
     return circlePoints;
 }
-
 
 // Aux function to create matrix
 function createArray(length) {
