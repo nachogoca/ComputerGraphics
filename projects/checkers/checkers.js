@@ -19,12 +19,13 @@ var TRIANGLES_PER_CIRCLE = 34;
 
 // Board representation
 // 0 -> empty
-// 1 -> player a
+// 1 -> player a            // Yellow
 // 2 -> player a selected 
-// 3 -> player b
+// 3 -> player b            // Orange
 // 4 -> player b selected
 var checkersTable;
 
+var isPlayerOneTurn = false; // Oranges begin
 var pieceIsSelected = false;
 var lastPieceSelected;
 
@@ -145,12 +146,60 @@ function processClick(pointClicked) {
         if(lastPieceSelected[0] == rowOfClick && lastPieceSelected[1] == colOfClick){
             checkersTable[ rowOfClick ][ colOfClick ] = squareState - 1;
         } else {
-            // TODO Implement checkers logic
-            // For now it moves
+            // In case of jump, only allow jump over enemies.
+            var diffRow = rowOfClick - lastPieceSelected[0];
+            var diffCol = colOfClick - lastPieceSelected[1];
             
+            // It is a jump
+            if ( Math.abs( diffRow ) == 2) {
+                
+                // Checkers are going down 
+                if(isPlayerOneTurn) {
+                    
+                    // Jump to the right
+                    if (diffCol > 0) {
+                        // If the intermediate check is the same player or an empty square, ignore movement. Oterwise, eat.
+                        var intermediateState = checkersTable[rowOfClick - 1][colOfClick - 1];
+                        if (intermediateState == 0 || intermediateState == 1) // 0 is empty, 1 is player 1 in idle state
+                            return false;
+                        else
+                            checkersTable[rowOfClick - 1][colOfClick - 1] = 0; // Eat checker
+                    } else {
+                        // Jump to the left
+                        var intermediateState = checkersTable[rowOfClick - 1][colOfClick + 1];
+                        if (intermediateState == 0 || intermediateState == 1)
+                            return false;
+                        else
+                            checkersTable[rowOfClick - 1][colOfClick + 1] = 0; // Eat checker
+                    }
+                } else {
+                    // Turn of player two, checkers are going up
+                    if (diffCol > 0) {  
+                        // Jump to the right
+                        var intermediateState = checkersTable[rowOfClick + 1][colOfClick - 1];
+                        if ( intermediateState == 0 || intermediateState == 3) // 0 is empty, 3 is player 2 in idle state
+                            return false;
+                        else
+                            checkersTable[rowOfClick + 1][colOfClick - 1] = 0; // Eat checker
+                            
+                    } else {
+                        // Jump to the left
+                        var intermediateState = checkersTable[rowOfClick + 1][colOfClick + 1];
+                        if ( intermediateState == 0 || intermediateState == 3)
+                            return false;
+                        else
+                            checkersTable[rowOfClick + 1][colOfClick + 1] = 0;        
+                    }    
+                } 
+            }
+            
+            // Move checker
             checkersTable[ rowOfClick ][ colOfClick ] = checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] - 1;
-            checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] = 0; // Remove piece from board
-        
+            // Remove piece from board
+            checkersTable[ lastPieceSelected[0] ][ lastPieceSelected[1] ] = 0; 
+            
+            isPlayerOneTurn =  !isPlayerOneTurn;
+            
         }
         pieceIsSelected = false;
         
@@ -184,7 +233,33 @@ function positionCanBeSelected(rowInBoard, colInBoard) {
             return false;
         if ( Math.abs ( lastPieceSelected[1] - colInBoard ) > 2 )     
             return false;
+            
+         // It can only move down
+        if (isPlayerOneTurn){            
+            if ( rowInBoard < lastPieceSelected[0])
+                return false; 
+        }
+        // It can only move up
+        if (!isPlayerOneTurn){  
+            if ( rowInBoard > lastPieceSelected[0])
+                return false;      
+        }
+            
+            
         return (pieceState == 0);   
+    }
+
+    // [Player 1] "Hey, it's my turn!"
+    if (isPlayerOneTurn){
+        if (pieceState == 3 || pieceState == 4)
+            return false;
+    }
+    
+    // [Player 2] "Hey, it's my turn!"
+    if (!isPlayerOneTurn){
+        if (pieceState == 1 || pieceState == 2)
+            return false;
+        
     }
 
     // If a piece hasn't been selected, the empty square is the only square that the user can't select.
