@@ -72,7 +72,7 @@ window.onload = function init()
 	
 	// Get bed data
 	var bedVertices =  getVerticesFromBed(roomWidth * (5.0 / 8.0), - roomDepth * (1.0 / 4.0));
-	var bedColors = getColorsFromBed(1);
+	var bedColors = getColorsFromBed(2);
 	var bedIndices = getBedIndices(indices);
 	
 	// Add all vertices 
@@ -129,7 +129,7 @@ function render()
 	modelView = looking;
 		
 	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
-	for (var i=0; i<12; i++) {
+	for (var i=0; i< 18; i++) {
 		gl.uniform4fv (colorLoc, colors[i]);
 		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 6*i );
 	}
@@ -156,11 +156,23 @@ function getVerticesFromBed(horizontalOrigin, depthOrigin) {
 		vec4(horizontalOrigin + 1 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0)
 	];
 	
-	var footLeg2 = [];
+	var footLeg2 = [
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0)
+	];
+	
+	
 	var footLeg3 = [];
 	var footLeg4 = [];
 	
-	totalBedParts = totalBedParts.concat(footLeg1, footLeg2, footLeg3, footLeg4);
+	totalBedParts = totalBedParts.concat(footLeg1);
+	totalBedParts = totalBedParts.concat(footLeg2);
 	
 	return totalBedParts;
 }
@@ -179,11 +191,14 @@ function getColorsFromBed(pieces){
 function getBedIndices(originalCubeIndices) {
 	var bedIndices =[];
 	
-	// Add 8 to the each element of the cube indices
-	for(var i = 0; i < originalCubeIndices.length; i++) {
-		
-		bedIndices.push(originalCubeIndices[i] + 8);
+	// Two feet
+	for(var j = 0; j < 2; j++) {
+		// Add 8 times i + 1 to the each element of the cube indices
+		for(var i = 0; i < originalCubeIndices.length; i++) {
+			bedIndices.push(originalCubeIndices[i] + 8 * (j + 1));
+		}
 	}
+
 	
 	return bedIndices;
 }
