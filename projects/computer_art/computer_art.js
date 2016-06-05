@@ -16,8 +16,8 @@ var cubeSize2 = cubeSize / 2.0;
 var windowMin = -cubeSize2;
 var windowMax = cubeSize + cubeSize2;
 
-var roomWidth = 50;
-var roomDepth = 50;
+var roomWidth = 100;
+var roomDepth = 150;
 var roomHeight = 50;
 
 var projection;
@@ -43,10 +43,10 @@ window.onload = function init()
 	   vec4(0.0, 0, 0, 1.0),
 	   vec4(roomWidth, 0, 0, 1.0),
 	   vec4(roomWidth, -1.0, 0, 1.0),
-	   vec4(0.0, -1.0, roomDepth, 1.0),
-	   vec4(0.0, 0, roomDepth, 1.0),
-	   vec4(roomWidth, 0, roomDepth, 1.0),
-	   vec4(roomWidth, -1.0, roomDepth, 1.0)
+	   vec4(0.0, -1.0, -roomDepth, 1.0),
+	   vec4(0.0, 0, -roomDepth, 1.0),
+	   vec4(roomWidth, 0, -roomDepth, 1.0),
+	   vec4(roomWidth, -1.0, -roomDepth, 1.0)
 	];
 	
 	 colors = [
@@ -58,11 +58,6 @@ window.onload = function init()
 		vec4(0.0, 1.0, 1.0, 1.0)   // cyan
 	];
 	
-	// Set origin of bed 
-	
-	
-	var bedVertices =  getVerticesFromBed(roomWidth * (3.0 / 4.0), roomDepth * (1.0 / 4.0));
-	var bedColors = getColorsFromBed(1);
 
 	// Load indices to represent the triangles that will draw each face
 	
@@ -75,20 +70,27 @@ window.onload = function init()
 	   5, 4, 0, 0, 1, 5   // left face
 	];
 	
-	
+	// Get bed data
+	var bedVertices =  getVerticesFromBed(roomWidth * (5.0 / 8.0), - roomDepth * (1.0 / 4.0));
+	var bedColors = getColorsFromBed(1);
+	var bedIndices = getBedIndices(indices);
 	
 	// Add all vertices 
 	vertices = vertices.concat(verticesFloor, bedVertices);
 	
 	// And colors
-    //
+    colors = colors.concat(bedColors);
+	
+	// And indices
+	indices = indices.concat(bedIndices);
+	
     //  Configure WebGL
     //
     gl.viewport( 0, 0, canvas.width, canvas.height );
 	aspect = canvas.width / canvas.height;
     gl.clearColor( 0.7, 0.7, 0.7, 1.0 );
 	gl.enable(gl.DEPTH_TEST);
-	projection = perspective (50.0, aspect, 1, 90);
+	projection = perspective (50.0, aspect, 1, 500);
 	//projection = ortho (windowMin, windowMax, windowMin, windowMax, windowMin, windowMax+cubeSize);
 	// Register event listeners for the buttons
 	
@@ -115,7 +117,7 @@ window.onload = function init()
 	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
 	
 	// Load translation and viewing matrices which don't change each render
-	looking = lookAt (vec3(25,20,-45), vec3(25,0,100), vec3(0.0, 1.0, 0.0));
+	looking = lookAt (vec3(50,50,100), vec3(50,0,-10), vec3(0.0, 1.0, 0.0));
 	
     render();
 };
@@ -125,9 +127,9 @@ function render()
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	modelView = looking;
-	
+		
 	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
-	for (var i=0; i<6; i++) {
+	for (var i=0; i<12; i++) {
 		gl.uniform4fv (colorLoc, colors[i]);
 		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 6*i );
 	}
@@ -135,6 +137,7 @@ function render()
 };
 
 function getVerticesFromBed(horizontalOrigin, depthOrigin) {
+
 	// Initialize bed units
 	var horizontalUnit = (roomWidth - horizontalOrigin) / 10.0;
 	var depthUnit = (roomDepth - depthOrigin) / 20.0;
@@ -145,12 +148,12 @@ function getVerticesFromBed(horizontalOrigin, depthOrigin) {
 	var footLeg1 = [
 		vec4(horizontalOrigin, 0, depthOrigin, 1.0),
 		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin, 1.0),
-		vec4(horizontalOrigin + 2 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
-		vec4(horizontalOrigin + 2 * horizontalUnit, 0, depthOrigin, 1.0),
-		vec4(horizontalOrigin, 0, depthOrigin + 2 * depthUnit, 1.0),
-		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin + 2 * depthUnit, 1.0),
-		vec4(horizontalOrigin + 2 * horizontalUnit, 8 * heightUnit, depthOrigin + 2 * depthUnit, 1.0),
-		vec4(horizontalOrigin + 2 * horizontalUnit, 0, depthOrigin + 2 * depthUnit, 1.0)
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, depthOrigin, 1.0),
+		vec4(horizontalOrigin, 0, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0)
 	];
 	
 	var footLeg2 = [];
@@ -167,8 +170,20 @@ function getColorsFromBed(pieces){
 	
 	// Add brown six times
 	for(var i = 0; i < 6 * pieces; i++) {
-		colors.push( vec4( 0.6, 0.29, 0.0, 1.0 ) );
+		colors.push( vec4( 0.6, 0.3, 0.0, 1.0 ) );
 	}
 	
 	return colors;
+}
+
+function getBedIndices(originalCubeIndices) {
+	var bedIndices =[];
+	
+	// Add 8 to the each element of the cube indices
+	for(var i = 0; i < originalCubeIndices.length; i++) {
+		
+		bedIndices.push(originalCubeIndices[i] + 8);
+	}
+	
+	return bedIndices;
 }
