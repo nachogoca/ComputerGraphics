@@ -53,7 +53,7 @@ window.onload = function init()
 	    vec4(1.0, 0.0, 0.0, 1.0),  // red
 		vec4(1.0, 1.0, 0.0, 1.0),  // yellow
 		vec4(0.0, 1.0, 0.0, 1.0),  // green
-		vec4(0.0, 0.0, 1.0, 1.0),  // blue
+		vec4(.25, 0.12 ,.23, .9),  // blue
 		vec4(1.0, 0.0, 1.0, 1.0),  // magenta
 		vec4(0.0, 1.0, 1.0, 1.0)   // cyan
 	];
@@ -70,19 +70,20 @@ window.onload = function init()
 	   5, 4, 0, 0, 1, 5   // left face
 	];
 	
-	// Get bed data
-	var bedVertices =  getVerticesFromBed(roomWidth * (5.0 / 8.0), - roomDepth * (1.0 / 4.0));
-	var bedColors = getColorsFromBed(2);
-	var bedIndices = getBedIndices(indices);
+	// Get Bed data
+	var bedWoodParts = 8;
+	var BedVertices =  getVerticesFromBed(roomWidth * (5.0 / 8.0), - roomDepth * (1.0 / 4.0));
+	var BedColors = getColorsFromBed(bedWoodParts);
+	var BedIndices = getBedIndices(indices, bedWoodParts);
 	
-	// Add all vertices 
-	vertices = vertices.concat(verticesFloor, bedVertices);
+	// Add all vertices, colors and indices of bed wood parts
+	vertices = vertices.concat(verticesFloor, BedVertices);
+    colors = colors.concat(BedColors);
+	indices = indices.concat(BedIndices);
 	
-	// And colors
-    colors = colors.concat(bedColors);
 	
-	// And indices
-	indices = indices.concat(bedIndices);
+	
+	
 	
     //  Configure WebGL
     //
@@ -117,7 +118,8 @@ window.onload = function init()
 	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
 	
 	// Load translation and viewing matrices which don't change each render
-	looking = lookAt (vec3(50,50,100), vec3(50,0,-10), vec3(0.0, 1.0, 0.0));
+	//looking = lookAt (vec3(50,50,100), vec3(50,0,-10), vec3(0.0, 1.0, 0.0));
+	looking = lookAt (vec3(0,50,75), vec3(50,0,-30), vec3(0.0, 1.0, 0.0));
 	
     render();
 };
@@ -129,7 +131,7 @@ function render()
 	modelView = looking;
 		
 	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
-	for (var i=0; i< 18; i++) {
+	for (var i=0; i< 6 * 9; i++) {
 		gl.uniform4fv (colorLoc, colors[i]);
 		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 6*i );
 	}
@@ -138,41 +140,103 @@ function render()
 
 function getVerticesFromBed(horizontalOrigin, depthOrigin) {
 
-	// Initialize bed units
+	// Initialize Bed units
 	var horizontalUnit = (roomWidth - horizontalOrigin) / 10.0;
 	var depthUnit = (roomDepth - depthOrigin) / 20.0;
 	var heightUnit = (roomHeight / 2.0) / 10.0;	
-	// Initialize bed parts
+	// Initialize Bed parts
 	var totalBedParts = [];
 	
 	var footLeg1 = [
-		vec4(horizontalOrigin, 0, depthOrigin, 1.0),
-		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin, 						0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit,	depthOrigin, 1.0),
 		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
-		vec4(horizontalOrigin + 1 * horizontalUnit, 0, depthOrigin, 1.0),
-		vec4(horizontalOrigin, 0, depthOrigin - 1 * depthUnit, 1.0),
-		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin, 						0, 				depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
 		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
-		vec4(horizontalOrigin + 1 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0)
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin - 1 * depthUnit, 1.0)
 	];
 	
 	var footLeg2 = [
-		vec4(horizontalOrigin + 4 * horizontalUnit, 0, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin, 1.0),
 		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
 		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
-		vec4(horizontalOrigin + 5 * horizontalUnit, 0, depthOrigin, 1.0),
-		vec4(horizontalOrigin + 4 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin - 1 * depthUnit, 1.0),
 		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
 		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
-		vec4(horizontalOrigin + 5 * horizontalUnit, 0, depthOrigin - 1 * depthUnit, 1.0)
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin - 1 * depthUnit, 1.0)
 	];
 	
+	var footLeg3 = [
+		vec4(horizontalOrigin, 						0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin,						0, 				depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin - 11 * depthUnit, 1.0)
+	];
 	
-	var footLeg3 = [];
-	var footLeg4 = [];
+	var footLeg4 = [
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin - 11 * depthUnit, 1.0)
+	];
 	
-	totalBedParts = totalBedParts.concat(footLeg1);
-	totalBedParts = totalBedParts.concat(footLeg2);
+	var bedPart1 = [
+		vec4(horizontalOrigin, 						1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						3 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 3 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						3 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 3 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0)
+	]
+	
+	var bedPart2 = [
+		vec4(horizontalOrigin + 4 * horizontalUnit,	1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit,	3 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 3 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit,	1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit,	3 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 3 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0)
+	]
+	
+	var bedPart3 = [
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0)
+	]
+	
+	var bedPart4 = [
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 11 * depthUnit, 1.0)
+	]
+	
+	totalBedParts = totalBedParts.concat(footLeg1, footLeg2, footLeg3, footLeg4);
+	totalBedParts = totalBedParts.concat(bedPart1, bedPart2, bedPart3, bedPart4);
 	
 	return totalBedParts;
 }
@@ -188,17 +252,17 @@ function getColorsFromBed(pieces){
 	return colors;
 }
 
-function getBedIndices(originalCubeIndices) {
-	var bedIndices =[];
+function getBedIndices(originalCubeIndices, pieces) {
+	var BedIndices =[];
 	
 	// Two feet
-	for(var j = 0; j < 2; j++) {
+	for(var j = 0; j < pieces; j++) {
 		// Add 8 times i + 1 to the each element of the cube indices
 		for(var i = 0; i < originalCubeIndices.length; i++) {
-			bedIndices.push(originalCubeIndices[i] + 8 * (j + 1));
+			BedIndices.push(originalCubeIndices[i] + 8 * (j + 1));
 		}
 	}
 
 	
-	return bedIndices;
+	return BedIndices;
 }
