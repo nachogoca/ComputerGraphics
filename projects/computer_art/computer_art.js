@@ -2,24 +2,27 @@
 var canvas;
 var gl;
 var colorLoc;
-var thetaLoc;
-var clipLoc;
+var modelViewLoc;
+var projectionLoc;
 
 var vertices = [];
 var colors = [];
 var indices = [];
-var theta = [];
+var c = [];
+var s = [];
 
 var cubeSize = 10;
-var windowMin = -cubeSize / 2.0;
-var windowMax = cubeSize + cubeSize/2.0;
+var cubeSize2 = cubeSize / 2.0;
+var windowMin = -cubeSize2;
+var windowMax = cubeSize + cubeSize2;
 
-var xAxis = 0;
-var yAxis = 1;
-var zAxis = 2;
-var axis = 0;
+var roomWidth = 50;
+var roomDepth = 50;
+var roomHeight = 50;
 
-var clipXform = mat4 ();
+var projection;
+var modelView;
+var aspect;
 
 window.onload = function init()
 {
@@ -28,18 +31,24 @@ window.onload = function init()
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
-	// Load vertices and colors for cube faces
+	// Load vertices and colors for the room floor
 	
-	vertices = [
-	   vec4(0.0, 0.0, cubeSize, 1.0),
-	   vec4(0.0, cubeSize, cubeSize, 1.0),
-	   vec4(cubeSize, cubeSize, cubeSize, 1.0),
-	   vec4(cubeSize, 0.0, cubeSize, 1.0),
-	   vec4(0.0, 0.0, 0.0, 1.0),
-	   vec4(0.0, cubeSize, 0.0, 1.0),
-	   vec4(cubeSize, cubeSize, 0.0, 1.0),
-	   vec4(cubeSize, 0.0, 0.0, 1.0)
+	// Floor dimensions
+	// Height [-1.0, 0.0]
+	// Width = [0, roomWidth]
+	// Depth = [0, roomDepth]
+	
+	var verticesFloor = [
+	   vec4(0.0, -1.0, 0, 1.0),
+	   vec4(0.0, 0, 0, 1.0),
+	   vec4(roomWidth, 0, 0, 1.0),
+	   vec4(roomWidth, -1.0, 0, 1.0),
+	   vec4(0.0, -1.0, roomDepth, 1.0),
+	   vec4(0.0, 0, roomDepth, 1.0),
+	   vec4(roomWidth, 0, roomDepth, 1.0),
+	   vec4(roomWidth, -1.0, roomDepth, 1.0)
 	];
+	
 	 colors = [
 	    vec4(1.0, 0.0, 0.0, 1.0),  // red
 		vec4(1.0, 1.0, 0.0, 1.0),  // yellow
@@ -49,6 +58,12 @@ window.onload = function init()
 		vec4(0.0, 1.0, 1.0, 1.0)   // cyan
 	];
 	
+	// Set origin of bed 
+	
+	
+	var bedVertices =  getVerticesFromBed(roomWidth * (3.0 / 4.0), roomDepth * (1.0 / 4.0));
+	var bedColors = getColorsFromBed(1);
+
 	// Load indices to represent the triangles that will draw each face
 	
 	indices = [
@@ -60,37 +75,32 @@ window.onload = function init()
 	   5, 4, 0, 0, 1, 5   // left face
 	];
 	
-	theta[0] = 0.0;
-	theta[1] = 0.0;
-	theta[2] = 0.0;
 	
+	
+	// Add all vertices 
+	vertices = vertices.concat(verticesFloor, bedVertices);
+	
+	// And colors
     //
     //  Configure WebGL
     //
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
+	aspect = canvas.width / canvas.height;
+    gl.clearColor( 0.7, 0.7, 0.7, 1.0 );
 	gl.enable(gl.DEPTH_TEST);
-    setWorldCoords (windowMin, windowMax, windowMin, windowMax, windowMin, windowMax);
-	
+	projection = perspective (50.0, aspect, 1, 90);
+	//projection = ortho (windowMin, windowMax, windowMin, windowMax, windowMin, windowMax+cubeSize);
 	// Register event listeners for the buttons
 	
-	var a=document.getElementById ("XButton");
-	a.addEventListener ("click", function() { axis = xAxis; });
-	var b=document.getElementById ("YButton");
-	b.addEventListener ("click", function () { axis = yAxis; });
-	var c=document.getElementById ("ZButton");
-	c.addEventListener ("click", function () { axis = zAxis; });
-	var d=document.getElementById ("Reset");
-	d.addEventListener ("click", function () { theta = [0.0, 0.0, 0.0]; axis = xAxis });
-
     //  Load shaders and initialize attribute buffers
     
     var program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
     
 	colorLoc = gl.getUniformLocation (program, "color");
-	thetaLoc = gl.getUniformLocation (program, "theta");
-	clipLoc  = gl.getUniformLocation (program, "clipXform");
+	modelViewLoc = gl.getUniformLocation (program, "modelView");
+	projectionLoc  = gl.getUniformLocation (program, "projection");
+	gl.uniformMatrix4fv (projectionLoc, false, flatten(projection));
 	
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
@@ -104,15 +114,19 @@ window.onload = function init()
 	gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
 	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
 	
+	// Load translation and viewing matrices which don't change each render
+	looking = lookAt (vec3(25,20,-45), vec3(25,0,100), vec3(0.0, 1.0, 0.0));
+	
     render();
 };
 
 function render()
 {
-    gl.clear( gl.COLOR_BUFER_BIT | gl.DEPTH_BUFFER_BIT);
-	theta[axis] += 0.5;
-	gl.uniform3fv (thetaLoc, flatten(theta));
-	gl.uniformMatrix4fv (clipLoc, false, flatten(clipXform));
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	modelView = looking;
+	
+	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
 	for (var i=0; i<6; i++) {
 		gl.uniform4fv (colorLoc, colors[i]);
 		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 6*i );
@@ -120,23 +134,41 @@ function render()
 	requestAnimFrame (render);
 };
 
-function setWorldCoords (xmin, xmax, ymin, ymax, zmin, zmax)
-{
-	var W = mat4 (1.0, 0.0, 0.0, -xmin,
-			  0.0, 1.0, 0.0, -ymin,
-			  0.0, 0.0, 1.0, -zmin,
-			  0.0, 0.0, 0.0, 1.0);
-			  
-	var S = mat4 (2.0/(xmax-xmin), 0.0, 0.0, 0.0,
-			  0.0, 2.0/(ymax-ymin), 0.0, 0.0,
-			  0.0, 0.0, 2.0/(zmax-zmin), 0.0,
-			  0.0, 0.0, 0.0, 1.0);
-			  
-	var C = mat4 (1.0, 0.0, 0.0, -1.0,
-			  0.0, 1.0, 0.0, -1.0,
-			  0.0, 0.0, 1.0, -1.0,
-			  0.0, 0.0, 0.0, 1.0);
+function getVerticesFromBed(horizontalOrigin, depthOrigin) {
+	// Initialize bed units
+	var horizontalUnit = (roomWidth - horizontalOrigin) / 10.0;
+	var depthUnit = (roomDepth - depthOrigin) / 20.0;
+	var heightUnit = (roomHeight / 2.0) / 10.0;	
+	// Initialize bed parts
+	var totalBedParts = [];
 	
-	clipXform = mult (C, mult(S, W));
-};
+	var footLeg1 = [
+		vec4(horizontalOrigin, 0, depthOrigin, 1.0),
+		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 2 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 2 * horizontalUnit, 0, depthOrigin, 1.0),
+		vec4(horizontalOrigin, 0, depthOrigin + 2 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 8 * heightUnit, depthOrigin + 2 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 2 * horizontalUnit, 8 * heightUnit, depthOrigin + 2 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 2 * horizontalUnit, 0, depthOrigin + 2 * depthUnit, 1.0)
+	];
+	
+	var footLeg2 = [];
+	var footLeg3 = [];
+	var footLeg4 = [];
+	
+	totalBedParts = totalBedParts.concat(footLeg1, footLeg2, footLeg3, footLeg4);
+	
+	return totalBedParts;
+}
 
+function getColorsFromBed(pieces){
+	var colors = [];
+	
+	// Add brown six times
+	for(var i = 0; i < 6 * pieces; i++) {
+		colors.push( vec4( 0.6, 0.29, 0.0, 1.0 ) );
+	}
+	
+	return colors;
+}
