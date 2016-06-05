@@ -20,6 +20,8 @@ var roomWidth = 100;
 var roomDepth = 150;
 var roomHeight = 50;
 
+var numberOfPrims = 10;
+
 var projection;
 var modelView;
 var aspect;
@@ -61,7 +63,7 @@ window.onload = function init()
 
 	// Load indices to represent the triangles that will draw each face
 	
-	indices = [
+	initialIndices = [
 	   1, 0, 3, 3, 2, 1,  // front face
 	   2, 3, 7, 7, 6, 2,  // right face
 	   3, 0, 4, 4, 7, 3,  // bottom face
@@ -74,16 +76,20 @@ window.onload = function init()
 	var bedWoodParts = 8;
 	var BedVertices =  getVerticesFromBed(roomWidth * (5.0 / 8.0), - roomDepth * (1.0 / 4.0));
 	var BedColors = getColorsFromBed(bedWoodParts);
-	var BedIndices = getBedIndices(indices, bedWoodParts);
+	//var BedIndices = getBedIndices(indices, bedWoodParts);
 	
 	// Add all vertices, colors and indices of bed wood parts
 	vertices = vertices.concat(verticesFloor, BedVertices);
     colors = colors.concat(BedColors);
-	indices = indices.concat(BedIndices);
 	
+	// Add mattress
+	var mattressVertices = getVerticesFromMattress(roomWidth * (5.0 / 8.0), - roomDepth * (1.0 / 4.0)); // Same origin as bed
+	var mattressColors = getColorsFromMattress();
 	
-	
-	
+	vertices = vertices.concat(mattressVertices);
+	colors = colors.concat(mattressColors);
+
+	indices = getIndices(initialIndices, numberOfPrims);
 	
     //  Configure WebGL
     //
@@ -131,19 +137,22 @@ function render()
 	modelView = looking;
 		
 	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
-	for (var i=0; i< 6 * 9; i++) {
+	for (var i=0; i< 6 * numberOfPrims; i++) {
 		gl.uniform4fv (colorLoc, colors[i]);
 		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 6*i );
 	}
 	requestAnimFrame (render);
 };
 
+// Returns array that represents the wood parts of the bed. 
+//It contains the vertices of all the rectangular prismas that represent each of the parts of the bed.
 function getVerticesFromBed(horizontalOrigin, depthOrigin) {
 
 	// Initialize Bed units
 	var horizontalUnit = (roomWidth - horizontalOrigin) / 10.0;
 	var depthUnit = (roomDepth - depthOrigin) / 20.0;
 	var heightUnit = (roomHeight / 2.0) / 10.0;	
+	
 	// Initialize Bed parts
 	var totalBedParts = [];
 	
@@ -241,6 +250,9 @@ function getVerticesFromBed(horizontalOrigin, depthOrigin) {
 	return totalBedParts;
 }
 
+// Returns array of 6 * pieces vectors, each one with the color brown.
+// 6 because that is the number of the faces in a prism.
+// 'pieces', because tha number of bed pieces if the number of prismas.
 function getColorsFromBed(pieces){
 	var colors = [];
 	
@@ -252,17 +264,52 @@ function getColorsFromBed(pieces){
 	return colors;
 }
 
-function getBedIndices(originalCubeIndices, pieces) {
-	var BedIndices =[];
+// Returns array that represents the mattress. 
+//It contains the vertices of the rectangular prism in the world coordinate.
+function getVerticesFromMattress(horizontalOrigin, depthOrigin) {
+	// The origin is the same as the bed, and the units too.
+		// Initialize Bed units
+	var horizontalUnit = (roomWidth - horizontalOrigin) / 10.0;
+	var depthUnit = (roomDepth - depthOrigin) / 20.0;
+	var heightUnit = (roomHeight / 2.0) / 10.0;	
 	
-	// Two feet
+	// Only one prism, or cuboid.
+	var mattressVertices = [
+		vec4(horizontalOrigin, 						1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						6 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 6 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						6 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 6 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0)
+	];
+	
+	return mattressVertices;
+}
+
+// Returns array of 6 vectors, each one with the color beige, for the mattress.
+// 6 because that is the number of the faces in a prism.
+function getColorsFromMattress(){
+	var colors = [];
+	
+	// Add beige six times
+	for(var i = 0; i < 6; i++) {
+		colors.push( vec4( 0.96, 0.96, 0.86, 1.0 ) ); // Beige
+	}	
+	
+	return colors;
+}
+
+// Returns the indices in the great vertices array. Every set of 6 elements corresponds to a face of the rectangular prism of cuboid.
+function getIndices(originalCubeIndices, pieces) {
+	var indices =[];
+
 	for(var j = 0; j < pieces; j++) {
 		// Add 8 times i + 1 to the each element of the cube indices
 		for(var i = 0; i < originalCubeIndices.length; i++) {
-			BedIndices.push(originalCubeIndices[i] + 8 * (j + 1));
+			indices.push(originalCubeIndices[i] + 8 * j);
 		}
 	}
-
-	
-	return BedIndices;
+	return indices;
 }
