@@ -33,12 +33,8 @@ var texCoord = [
 		vec2(1,0)
 ];
 
-var near = -1;
-var far = 100;
-var radius = 1.0;
-var theta  = 0.0;
-var phi    = 0.0;
-var dr = 5.0 * Math.PI/180.0;
+// Delta value
+var dr = 10;
 
 ///
 // Camera
@@ -58,8 +54,9 @@ var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
 var eye;
 
-//const at = vec3(0.0, 0.0, 0.0);
-const at = vec3(50,0,-30);
+// Look at the center of the floor.
+// Last element is negative because the floor is in negative coordinates of z
+const at = vec3(roomWidth / 2.0 , 0 , - (roomDepth / 2));
 const up = vec3(0.0, 1.0, 0.0);
 
 // quad uses first index to set color for face
@@ -110,7 +107,7 @@ window.onload = function init() {
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
+    gl.clearColor( 0.5, 0.5, 0.5, 1.0 );
     gl.enable(gl.DEPTH_TEST);
     
     
@@ -164,17 +161,13 @@ window.onload = function init() {
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
 
-// buttons to change viewing parameters
-
-    document.getElementById("Button1").onclick = function(){near  *= 1.1; far *= 1.1;};
-    document.getElementById("Button2").onclick = function(){near *= 0.9; far *= 0.9;};
-    document.getElementById("Button3").onclick = function(){radius *= 1.1;};
-    document.getElementById("Button4").onclick = function(){radius *= 0.9;};
-    document.getElementById("Button5").onclick = function(){theta += dr;};
-    document.getElementById("Button6").onclick = function(){theta -= dr;};
-    document.getElementById("Button7").onclick = function(){phi += dr;};
-    document.getElementById("Button8").onclick = function(){phi -= dr;};
-
+    // Configure buttons to change viewing parameters
+    document.getElementById("Button1").onclick = function(){eyeX += dr;};
+    document.getElementById("Button2").onclick = function(){eyeX -= dr;};
+    document.getElementById("Button3").onclick = function(){eyeY += dr;};
+    document.getElementById("Button4").onclick = function(){eyeY -= dr;};
+    document.getElementById("Button5").onclick = function(){eyeZ += dr;};
+    document.getElementById("Button6").onclick = function(){eyeZ -= dr;};
 
 
     
@@ -186,10 +179,9 @@ var render = function() {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
         //eye = vec3(z, y, z);
-        eye = vec3(eyeX, eyeY, radius*Math.cos(phi) + 30);
+        eye = vec3(eyeX, eyeY, eyeZ);
 
         modelViewMatrix = lookAt(eye, at , up); 
-        //projectionMatrix = ortho(left, right, bottom, ytop, near, far);
         projectionMatrix = perspective (50.0, aspect, 1, 500);
         
         gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
