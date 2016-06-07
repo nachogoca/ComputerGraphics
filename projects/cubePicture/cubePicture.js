@@ -125,7 +125,7 @@ window.onload = function init() {
 	
 	var texture = gl.createTexture();
 	var image = new Image();
-	image.src = "pyramid.gif";
+	image.src = "wood_floor.jpg";
 	gl.bindTexture (gl.TEXTURE_2D, texture);
 	gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 	gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -169,7 +169,6 @@ window.onload = function init() {
     document.getElementById("Button5").onclick = function(){eyeZ += dr;};
     document.getElementById("Button6").onclick = function(){eyeZ -= dr;};
 
-
     
     render();
 }
@@ -178,7 +177,6 @@ window.onload = function init() {
 var render = function() {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
-        //eye = vec3(z, y, z);
         eye = vec3(eyeX, eyeY, eyeZ);
 
         modelViewMatrix = lookAt(eye, at , up); 
