@@ -50,6 +50,13 @@ uniform sampler2D texMap;
 void
 main()
 {
+    //Just in case
+    /* if(fColor[3] < 0.1){
+        gl_FragColor = fColor;
+    } else {
+        gl_FragColor = texture2D(texMap, fTexCoord);
+    }*/
+        
     gl_FragColor = texture2D(texMap, fTexCoord);
 }
 </script>
