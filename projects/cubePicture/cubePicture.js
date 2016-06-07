@@ -189,7 +189,13 @@ window.onload = function init() {
     document.getElementById("Button4").onclick = function(){eyeY -= dr;};
     document.getElementById("Button5").onclick = function(){eyeZ += dr;};
     document.getElementById("Button6").onclick = function(){eyeZ -= dr;};
-
+    document.getElementById("Button7").onclick = function(){
+        
+        console.log('Points array: ' + pointsArray.length);
+        console.log('Colors array: ' + colorsArray.length);
+        console.log('Texture array: ' + texCoordsArray.length);
+        console.log('Normals array: ' + normalsArray.length);
+    }
     
     
     render();
