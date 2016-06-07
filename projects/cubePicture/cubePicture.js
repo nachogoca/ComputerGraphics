@@ -3,7 +3,7 @@
 var canvas;
 var gl;
 
-var numVertices  = 36;
+var numVerticesRectangularGeometry  = 36;
 
 var pointsArray = [];
 var colorsArray = [];
@@ -185,7 +185,7 @@ var render = function() {
         gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
         gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
             
-        gl.drawArrays( gl.TRIANGLES, 0, numVertices );
+        gl.drawArrays( gl.TRIANGLES, 0, numVerticesRectangularGeometry );
         requestAnimFrame(render);
 }
 
