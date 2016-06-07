@@ -59,6 +59,15 @@ var eye;
 const at = vec3(roomWidth / 2.0 , 0 , - (roomDepth / 2));
 const up = vec3(0.0, 1.0, 0.0);
 
+
+//// SPHERE
+var numTimesToSubdivide = 3;
+var sphereVerticesIndex = 0;
+
+var normalsArray = [];
+////
+
+
 // quad uses first index to set color for face
 
 function quad(a, b, c, d) {
@@ -89,8 +98,7 @@ function quad(a, b, c, d) {
 
 // Each face determines two triangles
 
-function colorCube()
-{
+function colorCube() {
     quad( 1, 0, 3, 2 );
     quad( 2, 3, 7, 6 );
     quad( 3, 0, 4, 7 );
@@ -133,6 +141,8 @@ window.onload = function init() {
 	
     initFloor();	  
     colorCube();
+    
+    initSphere();
 
     var cBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
@@ -141,6 +151,17 @@ window.onload = function init() {
     var vColor = gl.getAttribLocation( program, "vColor" );
 	gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vColor);
+
+    // Array that contains normals of the triangles that constitue the sphere
+    var nBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer);
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
+    
+    var vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vNormal);
+    
+    
 
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
@@ -170,6 +191,7 @@ window.onload = function init() {
     document.getElementById("Button6").onclick = function(){eyeZ -= dr;};
 
     
+    
     render();
 }
 
@@ -189,6 +211,7 @@ var render = function() {
         requestAnimFrame(render);
 }
 
+// Floor initialization
 function initFloor(){
 
     verticesFloor = [
@@ -202,3 +225,74 @@ function initFloor(){
        vec4(roomWidth, -1.0, -roomDepth, 1.0)
     ];
 };
+
+
+////////
+// SPHERE
+////////
+function initSphere(){
+    
+    var va = vec4(0.0, 0.0, -1.0,1);
+    var vb = vec4(0.0, 0.942809, 0.333333, 1);
+    var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
+    var vd = vec4(0.816497, -0.471405, 0.333333,1);
+    
+    tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
+}
+
+////
+//// Aux functions to generate sphere
+////
+
+// Last step of recursive algorithm,
+// Adds the final vertives to pointsArray 
+// and the triangle normal to normalsArray
+function triangle(a, b, c) {
+
+     var t1 = subtract(b, a);
+     var t2 = subtract(c, a);
+     var normal = normalize(cross(t2, t1));
+     normal = vec4(normal);
+
+
+     normalsArray.push(normal);
+     normalsArray.push(normal);
+     normalsArray.push(normal);
+  /*   
+     pointsArray.push(a);
+     pointsArray.push(b);      
+     pointsArray.push(c);
+*/
+     sphereVerticesIndex += 3;
+}
+
+// Recursive algorithm to generate the sphere. 
+function divideTriangle(a, b, c, count) {
+    if ( count > 0 ) {
+                
+        var ab = mix( a, b, 0.5);
+        var ac = mix( a, c, 0.5);
+        var bc = mix( b, c, 0.5);
+                
+        ab = normalize(ab, true);
+        ac = normalize(ac, true);
+        bc = normalize(bc, true);
+                                
+        divideTriangle( a, ab, ac, count - 1 );
+        divideTriangle( ab, b, bc, count - 1 );
+        divideTriangle( bc, c, ac, count - 1 );
+        divideTriangle( ab, bc, ac, count - 1 );
+    }
+    else { 
+        triangle( a, b, c );
+    }
+}
+
+// Start of recursive algorithm to generate sphere.
+// Parameters are the four vertex and number n of recursive steps
+function tetrahedron(a, b, c, d, n) {
+    divideTriangle(a, b, c, n);
+    divideTriangle(d, c, b, n);
+    divideTriangle(a, d, b, n);
+    divideTriangle(a, c, d, n);
+}
