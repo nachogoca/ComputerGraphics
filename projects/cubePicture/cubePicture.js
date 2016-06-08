@@ -3,8 +3,9 @@
 var canvas;
 var gl;
 
-// Number of vertices used to create th floor
+// Number of vertices used to create the floor
 var numVerticesRectangularGeometry  = 36;
+var numVerticesBed = 0;
 
 var pointsArray = [];
 var colorsArray = [];
@@ -12,8 +13,8 @@ var texCoordsArray = [];
 
 // Floor dimmensions
 var roomWidth = 20;
-var roomDepth = 30;
-var roomHeight = 50;
+var roomDepth = 40;
+var roomHeight = 10;
 
 var verticesFloor = [];
 
@@ -94,6 +95,7 @@ window.onload = function init() {
     initFloor();	  
     colorCube();
     
+    initBed( 1.0 , -3.0);
     
     initSphere(50);
 
@@ -115,7 +117,6 @@ window.onload = function init() {
     gl.enableVertexAttribArray( vNormal);
     
     
-
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW );
@@ -171,7 +172,7 @@ var render = function() {
         gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
         gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
             
-        gl.drawArrays( gl.TRIANGLES, 0, numVerticesRectangularGeometry + sphereVerticesIndex );
+        gl.drawArrays( gl.TRIANGLES, 0, numVerticesRectangularGeometry + sphereVerticesIndex + numVerticesBed);
         requestAnimFrame(render);
 }
 
@@ -314,4 +315,217 @@ function colorCube() {
     quad( 6, 5, 1, 2 );
     quad( 4, 5, 6, 7 );
     quad( 5, 4, 0, 1 );
+}
+
+///// Bed
+
+// Initialize array that represents the wood parts of the bed. 
+//It contains the vertices of all the rectangular prismas that represent each of the parts of the bed.
+function initBed(horizontalOrigin, depthOrigin) {
+
+	// Initialize Bed units
+	var horizontalUnit = (roomWidth - horizontalOrigin) / 15.0;
+	var depthUnit = (roomDepth - depthOrigin) / 25.0;
+	var heightUnit = (roomHeight / 2.0) / 10.0;	
+	
+    initFootLeg1(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit);
+    initFootLeg2(horizontalOrigin, depthOrigin,horizontalUnit, depthUnit, heightUnit);
+    initFootLeg3(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+    initFootLeg4(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+    
+    initBedPart1(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+    initBedPart2(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+    initBedPart3(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+    initBedPart4(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+
+    initMattress(horizontalOrigin,depthOrigin,horizontalUnit, depthUnit, heightUnit);
+
+}
+
+function initFootLeg1(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var footLeg1 = [
+		vec4(horizontalOrigin, 						0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit,	depthOrigin, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin, 						0, 				depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin - 1 * depthUnit, 1.0)
+	];
+    
+    insertBedPart(footLeg1, true); 
+}
+
+function initFootLeg2(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    	
+	var footLeg2 = [
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin - 1 * depthUnit, 1.0)
+	];
+    
+    insertBedPart(footLeg2, true); 
+}
+
+function initFootLeg3(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var footLeg3 = [
+		vec4(horizontalOrigin, 						0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin,						0, 				depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 0, 				depthOrigin - 11 * depthUnit, 1.0)
+	];
+    
+    insertBedPart(footLeg3, true); 
+}
+
+function initFootLeg4(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var footLeg4 = [
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 0, 				depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 8 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 0, 				depthOrigin - 11 * depthUnit, 1.0)
+	];
+    
+    insertBedPart(footLeg4, true); 
+}
+
+function initBedPart1(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var bedPart1 = [
+		vec4(horizontalOrigin, 						1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						3 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 3 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						3 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 3 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0)
+	]
+    
+    insertBedPart(bedPart1, true); 
+}
+
+function initBedPart2(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var bedPart2 = [
+		vec4(horizontalOrigin + 4 * horizontalUnit,	1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit,	3 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 3 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit,	1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit,	3 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 3 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0)
+	]
+    
+    insertBedPart(bedPart2, true); 
+}
+
+function initBedPart3(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var bedPart3 = [
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 0 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 1 * depthUnit, 1.0)
+	]
+    
+    insertBedPart(bedPart3, true); 
+}
+
+function initBedPart4(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var bedPart4 = [
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	1 * heightUnit,	depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 1 * horizontalUnit,	3 * heightUnit,	depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 3 * heightUnit, depthOrigin - 11 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 4 * horizontalUnit, 1 * heightUnit,	depthOrigin - 11 * depthUnit, 1.0)
+	]
+    
+    insertBedPart(bedPart4, true); 
+}
+
+function initMattress(horizontalOrigin,depthOrigin, horizontalUnit, depthUnit, heightUnit){
+    var mattressVertices = [
+		vec4(horizontalOrigin, 						1 * heightUnit + 1,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						5 * heightUnit + 1,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 5 * heightUnit + 1, depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit + 1,	depthOrigin - 1 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						1 * heightUnit + 1,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin, 						5 * heightUnit + 1,	depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 5 * heightUnit + 1, depthOrigin - 10 * depthUnit, 1.0),
+		vec4(horizontalOrigin + 5 * horizontalUnit, 1 * heightUnit  +1,	depthOrigin - 10 * depthUnit, 1.0)
+	];
+    
+    insertBedPart(mattressVertices, false); 
+}
+
+function insertBedPart(bedPart, isMadeOfWood){
+    insertBedPartFace( bedPart, isMadeOfWood, 1, 0, 3, 2 );
+    insertBedPartFace( bedPart, isMadeOfWood, 2, 3, 7, 6 );
+    insertBedPartFace( bedPart, isMadeOfWood, 3, 0, 4, 7 );
+    insertBedPartFace( bedPart, isMadeOfWood, 6, 5, 1, 2 );
+    insertBedPartFace( bedPart, isMadeOfWood, 4, 5, 6, 7 );
+    insertBedPartFace( bedPart, isMadeOfWood, 5, 4, 0, 1 );
+}
+
+// Insert geometry and colors of bed face, in the appropiate order for webgl.
+function insertBedPartFace(bedPart, isMadeOfWood, vertexA, vertexB, vertexC, vertexD) {
+     var numVertices = 6;
+     
+     pointsArray.push( bedPart[ vertexA ] ); 
+	 texCoordsArray.push(texCoord[0]);
+	 
+     pointsArray.push( bedPart[ vertexB ]); 
+	 texCoordsArray.push(texCoord[1]);
+	 
+     pointsArray.push( bedPart[ vertexC ]); 
+	 texCoordsArray.push(texCoord[2]);
+	 
+     pointsArray.push( bedPart[ vertexA ]); 
+	 texCoordsArray.push(texCoord[0]);
+
+     pointsArray.push( bedPart[vertexC ]); 
+	 texCoordsArray.push(texCoord[2]);
+
+     pointsArray.push( bedPart[ vertexD ]); 
+	 texCoordsArray.push(texCoord[3]);
+    
+     numVerticesBed += numVertices;
+    
+    // Add color
+     var brownColor = vec4( 0.6, 0.3, 0.0, 1.0 );
+     var beigeColor = vec4( 0.96, 0.96, 0.86, 1.0 ); 
+     
+     if( isMadeOfWood )
+        addColor( numVertices, brownColor );
+     else
+        addColor( numVertices, beigeColor );
+     
+     
+}
+
+// Adds colors 'color' 'numTimes' times to the color array.
+function addColor(numTimes, color) {
+    for( var i = 0; i < numTimes; i++) {
+        colorsArray.push(color);
+    }   
 }
