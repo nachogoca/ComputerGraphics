@@ -43,7 +43,7 @@ var dr = 10;
 // Camera
 var aspect;
 
-var eyeX = 0;
+var eyeX = -10;
 var eyeY = 12;
 var eyeZ = 25;
 
@@ -59,7 +59,21 @@ var sphereVerticesIndex = 0;
 var normalsArray = [];
 ////
 
+/// LIGHT
 
+var lightPosition = vec4(1000.0, 20.0, 1.0, 1.0 );
+var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
+var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
+var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
+
+var materialAmbient = vec4( 1.0, 0.0, 1.0, 1.0 );
+var materialDiffuse = vec4( 1.0, 0.8, 0.0, 1.0 );
+var materialSpecular = vec4( 1.0, 0.8, 0.0, 1.0 );
+var materialShininess = 100.0;
+
+var ambientColor, diffuseColor, specularColor;
+
+///
 
 window.onload = function init() {
     canvas = document.getElementById( "gl-canvas" );
@@ -94,11 +108,11 @@ window.onload = function init() {
 	
     initFloor();	  
     colorCube();
-    
     initBed( 1.0 , -3.0);
-    
     initSphere(50);
-
+    initLight();
+    
+    // Color
     var cBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
@@ -107,7 +121,7 @@ window.onload = function init() {
 	gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vColor);
 
-    // Array that contains normals of the triangles that constitue the sphere
+    // Light
     var nBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer);
     gl.bufferData( gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW );
@@ -116,7 +130,7 @@ window.onload = function init() {
     gl.vertexAttribPointer( vNormal, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vNormal);
     
-    
+    // Vertices
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW );
@@ -125,6 +139,7 @@ window.onload = function init() {
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
 	
+    // Texture
 	var tBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(texCoordsArray), gl.STATIC_DRAW);
@@ -135,6 +150,19 @@ window.onload = function init() {
  
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
+
+    // Send things to compute light to the fragment shader
+        gl.uniform4fv( gl.getUniformLocation(program, 
+       "ambientProduct"),flatten(ambientProduct) );
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "diffuseProduct"),flatten(diffuseProduct) );
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "specularProduct"),flatten(specularProduct) );	
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "lightPosition"),flatten(lightPosition) );
+    gl.uniform1f( gl.getUniformLocation(program, 
+       "shininess"),materialShininess );
+
 
     // Configure buttons to change viewing parameters
     document.getElementById("Button1").onclick = function(){eyeX += dr;};
@@ -176,7 +204,15 @@ var render = function() {
         requestAnimFrame(render);
 }
 
-
+////////
+// LIGHT
+////////
+function initLight(){
+    ambientProduct = mult(lightAmbient, materialAmbient);
+    diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    specularProduct = mult(lightSpecular, materialSpecular);
+};
+////////
 
 ////////
 // SPHERE
@@ -199,17 +235,15 @@ function initSphere(offset){
 // Adds the final vertives to pointsArray 
 // and the triangle normal to normalsArray
 function triangle(a, b, c) {
-     
     
      var t1 = subtract(b, a);
      var t2 = subtract(c, a);
      var normal = normalize(cross(t2, t1));
      normal = vec4(normal);
 
-
-     //normalsArray.push(normal);
-     //normalsArray.push(normal);
-     //normalsArray.push(normal);
+     normalsArray.push(normal);
+     normalsArray.push(normal);
+     normalsArray.push(normal);
      
      pointsArray.push(a);
      pointsArray.push(b);      
@@ -304,6 +338,9 @@ function quad(a, b, c, d) {
      pointsArray.push(verticesFloor[d]); 
      colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) ); 
 	 texCoordsArray.push(texCoord[3]);
+     
+     addNormalVector( verticesFloor[ a ], verticesFloor[ b ], verticesFloor[ c ] );
+     addNormalVector( verticesFloor[ a ], verticesFloor[ c ], verticesFloor[ d ] );
 }
 
 // Each face determines two triangles
@@ -520,7 +557,9 @@ function insertBedPartFace(bedPart, isMadeOfWood, vertexA, vertexB, vertexC, ver
      else
         addColor( numVertices, beigeColor );
      
-     
+     // Both triangles that conform the square are sent to compute normal vector
+     addNormalVector( bedPart[ vertexA ], bedPart[ vertexB ], bedPart [vertexC]);
+     addNormalVector( bedPart[ vertexA ], bedPart[ vertexC ], bedPart [vertexD]);
 }
 
 // Adds colors 'color' 'numTimes' times to the color array.
@@ -528,4 +567,17 @@ function addColor(numTimes, color) {
     for( var i = 0; i < numTimes; i++) {
         colorsArray.push(color);
     }   
+}
+
+// Compute normals and add them to normalsArray
+function addNormalVector(vectorA, vectorB, vectorC) {
+     var t1 = subtract(vectorB, vectorC);
+     var t2 = subtract(vectorC, vectorA);
+     
+     var normal = normalize(cross(t2, t1));
+     normal = vec4(normal);
+
+     normalsArray.push(normal);
+     normalsArray.push(normal);
+     normalsArray.push(normal);
 }
