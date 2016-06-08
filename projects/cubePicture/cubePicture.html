@@ -4,8 +4,6 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 <title>Art.</title>
 
-
-
 <p>
 <button id = "Button7">Debug aux</button>
 </p>
@@ -44,13 +42,14 @@ void
 main()
 {
     //Just in case
-    /* if(fColor[3] < 0.1){
-        gl_FragColor = fColor;
-    } else {
+     if(fColor[3] < 0.1){
         gl_FragColor = texture2D(texMap, fTexCoord);
-    }*/
         
-    gl_FragColor = texture2D(texMap, fTexCoord);
+    } else {
+        gl_FragColor = fColor;
+    }
+        
+    //gl_FragColor = fColor+ texture2D(texMap, fTexCoord);
 }
 </script>
 

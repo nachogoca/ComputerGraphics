@@ -3,14 +3,16 @@
 var canvas;
 var gl;
 
+// Number of vertices used to create th floor
 var numVerticesRectangularGeometry  = 36;
 
 var pointsArray = [];
 var colorsArray = [];
 var texCoordsArray = [];
 
-var roomWidth = 100;
-var roomDepth = 150;
+// Floor dimmensions
+var roomWidth = 20;
+var roomDepth = 30;
 var roomHeight = 50;
 
 var verticesFloor = [];
@@ -41,23 +43,12 @@ var dr = 10;
 var aspect;
 
 var eyeX = 0;
-var eyeY = 50;
-var eyeZ = 75;
-
-var left = -1.0;
-var right = 1.0;
-var ytop = 1.0;
-var bottom = -1.0;
-
+var eyeY = 12;
+var eyeZ = 25;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
-var eye;
 
-// Look at the center of the floor.
-// Last element is negative because the floor is in negative coordinates of z
-const at = vec3(roomWidth / 2.0 , 0 , - (roomDepth / 2));
-const up = vec3(0.0, 1.0, 0.0);
 
 
 //// SPHERE
@@ -67,45 +58,6 @@ var sphereVerticesIndex = 0;
 var normalsArray = [];
 ////
 
-
-// quad uses first index to set color for face
-
-function quad(a, b, c, d) {
-     pointsArray.push(verticesFloor[a]); 
-     colorsArray.push(vertexColors[a]); 
-	 texCoordsArray.push(texCoord[0]);
-	 
-     pointsArray.push(verticesFloor[b]); 
-     colorsArray.push(vertexColors[a]); 
-	 texCoordsArray.push(texCoord[1]);
-	 
-     pointsArray.push(verticesFloor[c]); 
-     colorsArray.push(vertexColors[a]);    
-	 texCoordsArray.push(texCoord[2]);
-	 
-     pointsArray.push(verticesFloor[a]); 
-     colorsArray.push(vertexColors[a]); 
-	 texCoordsArray.push(texCoord[0]);
-
-     pointsArray.push(verticesFloor[c]); 
-     colorsArray.push(vertexColors[a]); 
-	 texCoordsArray.push(texCoord[2]);
-
-     pointsArray.push(verticesFloor[d]); 
-     colorsArray.push(vertexColors[a]); 
-	 texCoordsArray.push(texCoord[3]);
-}
-
-// Each face determines two triangles
-
-function colorCube() {
-    quad( 1, 0, 3, 2 );
-    quad( 2, 3, 7, 6 );
-    quad( 3, 0, 4, 7 );
-    quad( 6, 5, 1, 2 );
-    quad( 4, 5, 6, 7 );
-    quad( 5, 4, 0, 1 );
-}
 
 
 window.onload = function init() {
@@ -141,6 +93,7 @@ window.onload = function init() {
 	
     initFloor();	  
     colorCube();
+    
     
     initSphere();
 
@@ -204,8 +157,13 @@ window.onload = function init() {
 
 var render = function() {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            
-        eye = vec3(eyeX, eyeY, eyeZ);
+        
+        // Look at the center of the floor.
+        // Last element is negative because the floor is in negative coordinates of z
+        //var at = vec3(roomWidth / 2.0 , 0 , - (roomDepth / 2));
+        var at = vec3(0.0, 0.0, 0.0);
+        var up = vec3(0.0, 1.0, 0.0);
+        var eye = vec3(eyeX, eyeY, eyeZ);
 
         modelViewMatrix = lookAt(eye, at , up); 
         projectionMatrix = perspective (50.0, aspect, 1, 500);
@@ -213,24 +171,10 @@ var render = function() {
         gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
         gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
             
-        gl.drawArrays( gl.TRIANGLES, 0, numVerticesRectangularGeometry );
+        gl.drawArrays( gl.TRIANGLES, 0, numVerticesRectangularGeometry + sphereVerticesIndex );
         requestAnimFrame(render);
 }
 
-// Floor initialization
-function initFloor(){
-
-    verticesFloor = [
-       vec4(0.0, -1.0, 0, 1.0),
-       vec4(0.0, 0, 0, 1.0),
-       vec4(roomWidth, 0, 0, 1.0),
-       vec4(roomWidth, -1.0, 0, 1.0),
-       vec4(0.0, -1.0, -roomDepth, 1.0),
-       vec4(0.0, 0, -roomDepth, 1.0),
-       vec4(roomWidth, 0, -roomDepth, 1.0),
-       vec4(roomWidth, -1.0, -roomDepth, 1.0)
-    ];
-};
 
 
 ////////
@@ -254,21 +198,32 @@ function initSphere(){
 // Adds the final vertives to pointsArray 
 // and the triangle normal to normalsArray
 function triangle(a, b, c) {
-
+     
+    
      var t1 = subtract(b, a);
      var t2 = subtract(c, a);
      var normal = normalize(cross(t2, t1));
      normal = vec4(normal);
 
 
-     normalsArray.push(normal);
-     normalsArray.push(normal);
-     normalsArray.push(normal);
-  /*   
+     //normalsArray.push(normal);
+     //normalsArray.push(normal);
+     //normalsArray.push(normal);
+     
      pointsArray.push(a);
      pointsArray.push(b);      
      pointsArray.push(c);
-*/
+
+     var randomColor = vec4(Math.random(), Math.random(), Math.random(), 1.0);
+
+     colorsArray.push( randomColor );
+     colorsArray.push( randomColor );
+     colorsArray.push( randomColor );
+     
+     texCoordsArray.push(texCoord[0]);
+     texCoordsArray.push(texCoord[1]);
+     texCoordsArray.push(texCoord[2]);
+
      sphereVerticesIndex += 3;
 }
 
@@ -301,4 +256,62 @@ function tetrahedron(a, b, c, d, n) {
     divideTriangle(d, c, b, n);
     divideTriangle(a, d, b, n);
     divideTriangle(a, c, d, n);
+}
+
+
+/// Floor
+
+// Floor initialization
+function initFloor(){
+
+    verticesFloor = [
+       vec4( - roomWidth / 2.0, -2.0, 0, 1.0),
+       vec4( - roomWidth / 2.0, -1.0, 0, 1.0),
+       vec4(   roomWidth / 2.0, -1.0, 0, 1.0),
+       vec4(   roomWidth / 2.0, -2.0, 0, 1.0),
+       vec4( - roomWidth / 2.0, -2.0, -roomDepth, 1.0),
+       vec4( - roomWidth / 2.0, -1.0, -roomDepth, 1.0),
+       vec4(   roomWidth / 2.0, -1.0, -roomDepth, 1.0),
+       vec4(   roomWidth / 2.0, -2.0, -roomDepth, 1.0)
+    ];
+};
+
+
+// quad uses first index to set color for face
+
+function quad(a, b, c, d) {
+     pointsArray.push(verticesFloor[a]); 
+     colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) ); 
+	 texCoordsArray.push(texCoord[0]);
+	 
+     pointsArray.push(verticesFloor[b]); 
+     colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) ); 
+	 texCoordsArray.push(texCoord[1]);
+	 
+     pointsArray.push(verticesFloor[c]); 
+     colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) );   
+	 texCoordsArray.push(texCoord[2]);
+	 
+     pointsArray.push(verticesFloor[a]); 
+     colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) ); 
+	 texCoordsArray.push(texCoord[0]);
+
+     pointsArray.push(verticesFloor[c]); 
+     colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) ); 
+	 texCoordsArray.push(texCoord[2]);
+
+     pointsArray.push(verticesFloor[d]); 
+     colorsArray.push( vec4(0.0, 0.0, 0.0, 0.0) ); 
+	 texCoordsArray.push(texCoord[3]);
+}
+
+// Each face determines two triangles
+
+function colorCube() {
+    quad( 1, 0, 3, 2 );
+    quad( 2, 3, 7, 6 );
+    quad( 3, 0, 4, 7 );
+    quad( 6, 5, 1, 2 );
+    quad( 4, 5, 6, 7 );
+    quad( 5, 4, 0, 1 );
 }
