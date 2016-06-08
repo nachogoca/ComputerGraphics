@@ -95,7 +95,7 @@ window.onload = function init() {
     colorCube();
     
     
-    initSphere();
+    initSphere(50);
 
     var cBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
@@ -180,12 +180,12 @@ var render = function() {
 ////////
 // SPHERE
 ////////
-function initSphere(){
+function initSphere(offset){
     
-    var va = vec4(0.0, 0.0, -1.0,1);
-    var vb = vec4(0.0, 0.942809, 0.333333, 1);
-    var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
-    var vd = vec4(0.816497, -0.471405, 0.333333,1);
+    var va = vec4(0.0 * offset, 0.0 * offset, -1.0 * offset, 1.0);
+    var vb = vec4(0.0 * offset, 0.942809 * offset, 0.333333 * offset, 1.0);
+    var vc = vec4(-0.816497 * offset, -0.471405 * offset , 0.333333 * offset, 1.0);
+    var vd = vec4(0.816497 * offset, -0.471405 * offset , 0.333333 * offset, 1.0);
     
     tetrahedron(va, vb, vc, vd, numTimesToSubdivide);
 }
